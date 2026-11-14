@@ -359,8 +359,76 @@ function UI:CreateWindow(config)
     bindTheme(killButton, "TextColor3", "Text")
     corner(killButton, 8)
     stroke(killButton, "Outline")
+
+    for _, info in ipairs({ { closeButton, "minus", "-"}, { killButton, "x", "×"} }) do
+        local button, iconName, glyph = info[1], info[2], info[3]
+        local icon = UI.Icons and UI.Icons:Create(button, iconName, 14)
+        if icon then
+            button.Text = ""
+            icon.AnchorPoint = Vector2.new(0.5, 0.5)
+            icon.Position = UDim2.fromScale(0.5, 0.5)
+        else
+            button.Text = glyph
+        end
+    end
+
+    local function confirmClose(onYes)
+        if window.ConfirmOpen then
+            return
+        end
+        window.ConfirmOpen = true
+        local dim = new("TextButton", { BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), Text = "", AutoButtonColor = false, ZIndex = 50}, main)
+        local box = new("Frame", { Active = true, AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(260, 0), AutomaticSize = Enum.AutomaticSize.Y}, dim)
+        bindTheme(box, "BackgroundColor3", "Popup")
+        corner(box, 12)
+        stroke(box, "Outline")
+        padding(box, 14)
+        new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder}, box)
+        local scale = new("UIScale", { Scale = 0.9}, box)
+        local heading = new("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 18), Font = Enum.Font.GothamBold, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Text = tostring(config.ConfirmTitle or "Close the window?"), LayoutOrder = 1}, box)
+        bindTheme(heading, "TextColor3", "Text")
+        local body = new("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Font = Enum.Font.Gotham, TextSize = 12, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, Text = tostring(config.ConfirmText or "The window will be removed. Use the minimize button to just hide it."), LayoutOrder = 2}, box)
+        bindTheme(body, "TextColor3", "SubText")
+        local row = new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 30), LayoutOrder = 3}, box)
+        new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder}, row)
+        local function choose(yes)
+            UI.Tween(dim, { BackgroundTransparency = 1}, 0.15)
+            UI.Tween(scale, { Scale = 0.9}, 0.15)
+            task.delay(0.16, function ()
+                window.ConfirmOpen = false
+                dim:Destroy()
+                if yes then
+                    onYes()
+                end
+            end)
+        end
+        local noButton = new("TextButton", { Size = UDim2.new(0.5, -4, 1, 0), Font = Enum.Font.GothamMedium, TextSize = 12, AutoButtonColor = false, Text = tostring(config.ConfirmNo or "Cancel"), LayoutOrder = 1}, row)
+        bindTheme(noButton, "BackgroundColor3", "Element")
+        bindTheme(noButton, "TextColor3", "Text")
+        corner(noButton, 8)
+        stroke(noButton, "Outline")
+        local yesButton = new("TextButton", { Size = UDim2.new(0.5, -4, 1, 0), BackgroundColor3 = Color3.fromRGB(205, 65, 65), TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 12, AutoButtonColor = false, Text = tostring(config.ConfirmYes or "Close"), LayoutOrder = 2}, row)
+        corner(yesButton, 8)
+        noButton.MouseButton1Click:Connect(function ()
+            choose(false)
+        end)
+        yesButton.MouseButton1Click:Connect(function ()
+            choose(true)
+        end)
+        dim.MouseButton1Click:Connect(function ()
+            choose(false)
+        end)
+        UI.Tween(dim, { BackgroundTransparency = 0.45}, 0.18)
+        UI.Tween(scale, { Scale = 1}, 0.22, Enum.EasingStyle.Back)
+    end
     killButton.MouseButton1Click:Connect(function ()
-        window:Destroy()
+        if config.ConfirmClose == false then
+            window:Destroy()
+        else
+            confirmClose(function ()
+                window:Destroy()
+            end)
+        end
     end)
     window.TitleBar = titleBar
 

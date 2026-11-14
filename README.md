@@ -48,6 +48,7 @@ local window = UI:CreateWindow({
     RailExpandDelay = 3,           -- seconds before the names slide out at start
     RailCollapseAfter = 10,        -- seconds without activity before the panel folds back to icons
     DockChanged = function (side) end,
+    ConfirmClose = true,           -- the "×" button asks "Close the window?" first (ConfirmTitle / ConfirmText / ConfirmYes / ConfirmNo change the texts)
     SaveDock = true,               -- remembers the chosen side in a small file in the workspace (DockFile = "name.txt" to rename it)
     Blur = false,                  -- off by default; BlurMode = "Screen" blurs the whole view
 })
@@ -155,7 +156,7 @@ Old Lucide names such as `home`, `alert-triangle`, `check-circle` are understood
 
 ## Credits and licenses
 
-Lumen itself is licensed under **MIT**.
+Lumen itself is licensed under **<choose a license, e.g. MIT>**.
 
 The icon bundle is generated from the icon sets below. Check each license before you redistribute the bundle:
 
