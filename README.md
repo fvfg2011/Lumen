@@ -1,2 +1,167 @@
 # Lumen
-Lumen is UI lib for roblox scripts
+
+A frosted-glass UI library for Roblox script executors, built with phones in mind.
+
+- Tab panel that starts as icons and slides its names out; can dock **left, right, top or bottom**
+- Tabs with sub-tabs, animated page switching
+- Toggle, Slider, Button, Input, Dropdown (single / multi / search), Colorpicker, Keybind, Section, Paragraph, Divider
+- 13 built-in themes (Dark, Light, Glass and ten accent colours) that switch live, plus your own themes
+- Notifications, an open button that appears when the window is hidden, drag to move
+- Icon sets: Lucide, Solar, Gravity, Craft (one optional bundle file)
+- One file, no dependencies
+
+> Made by Nick. Works in executors that provide `loadstring`, `readfile` and `writefile` (tested on Delta, mobile).
+
+## Quick start
+
+```lua
+local UI = loadstring(game:HttpGet("https://raw.githubusercontent.com/fvfg2011/Lumen/main/Lumen.lua"))()
+-- optional icons (one file, all sets are read only when first used):
+UI.Icons:SetBundle("Lumen_Icons.lua")   -- a file in the executor workspace
+
+local window = UI:CreateWindow({
+    Title = "My Hub",
+    Author = "me",
+    ToggleKey = Enum.KeyCode.RightShift,
+})
+
+local main = window:Tab({ Title = "Main", Icon = "house" })
+main:Section({ Title = "Combat" })
+main:Toggle({ Title = "Auto farm", Value = false, Callback = function (on) print("auto farm", on) end })
+main:Slider({ Title = "Speed", Step = 1, Value = { Min = 0, Max = 100, Default = 50 }, Callback = function (n) print(n) end })
+main:Button({ Title = "Hello", Icon = "bell", Callback = function () UI:Notify({ Title = "Lumen", Content = "Hello!" }) end })
+```
+
+If you keep `Lumen.lua` in your workspace instead: `loadstring(readfile("Lumen.lua"))()`.
+
+## Window
+
+```lua
+local window = UI:CreateWindow({
+    Title = "My Hub",              -- shown in the window header
+    Author = "me",                 -- optional, shown after the title
+    Size = UDim2.fromOffset(620, 480),
+    ToggleKey = Enum.KeyCode.RightShift,
+    OpenButton = { Title = "Open", Draggable = true, Enabled = true },
+    Dock = "Left",                 -- "Left" | "Right" | "Top" | "Bottom"
+    BarLabels = false,             -- Top / Bottom: show names under the icons
+    RailExpandDelay = 3,           -- seconds before the names slide out at start
+    RailCollapseAfter = 10,        -- seconds without activity before the panel folds back to icons
+    DockChanged = function (side) end,
+    SaveDock = true,               -- remembers the chosen side in a small file in the workspace (DockFile = "name.txt" to rename it)
+    Blur = false,                  -- off by default; BlurMode = "Screen" blurs the whole view
+})
+```
+
+| Method | What it does |
+| --- | --- |
+| `window:Tab({ Title, Icon })` | New tab. Returns a tab |
+| `tab:Tab({ Title, Icon })` | Sub-tab of a tab |
+| `window:SelectTab(tab)` | Opens a tab |
+| `window:SetDock("Right")` | Moves the tab panel (animated) |
+| `window:SetVisible(bool)` / `window:Toggle()` | Shows / hides the window |
+| `window:OnDestroy(fn)` / `window:Destroy()` | Cleanup |
+
+The four dock buttons in the window header are always there, so every hub built on Lumen can move its panel.
+
+### Tab panel behaviour
+
+- Starts as icons only; after `RailExpandDelay` seconds the names slide out.
+- On PC it also opens on hover; on a phone it opens when you tap it.
+- Folds back after `RailCollapseAfter` seconds without activity.
+- Width follows the longest tab name (measured in pixels). A sub-tab widens the panel only if its name plus indent is longer.
+- Left / Right: sub-tabs sit under their parent with a tree line, and stay visible as small icons when the panel is folded. A dot marks tabs that have sub-tabs. A tab without an icon shows its first letter.
+- Top / Bottom: icons only, sub-tabs appear to the right of the parent.
+
+## Elements
+
+All elements are created on a tab and take a `Title` and an optional `Desc`.
+
+```lua
+tab:Section({ Title = "Group" })
+tab:Paragraph({ Title = "Text", Desc = "Some description" })      -- tab:Label is the same
+tab:Divider()
+
+tab:Button({ Title = "Run", Icon = "play", Callback = function () end })
+
+local toggle = tab:Toggle({ Title = "Option", Value = true, Callback = function (v) end })
+toggle:Set(false)            -- runs the callback; toggle:Set(false, true) does not
+toggle:Get()
+
+tab:Slider({ Title = "Value", Step = 1, Value = { Min = 0, Max = 100, Default = 20 }, Live = false, Callback = function (n) end })
+-- by default the callback runs when you release the slider; Live = true runs it while dragging
+
+tab:Input({ Title = "Name", Placeholder = "type here", Type = "Input", Callback = function (text) end })   -- Type = "Textarea" for several lines
+
+local list = tab:Dropdown({ Title = "Map", Values = { "A", "B", "C" }, Value = "A", Callback = function (v) end })
+-- Multi = true (Value and the callback use lists), AllowNone = true, SearchBarEnabled = true (shown automatically above 10 items)
+list:Refresh({ "X", "Y" })   -- replaces the options, no callback
+list:Select("X")             -- list:Get()
+
+tab:Colorpicker({ Title = "Colour", Default = Color3.fromRGB(0, 145, 255), Live = false, Callback = function (color) end })
+
+tab:Keybind({ Title = "Key", Default = Enum.KeyCode.F, Callback = function (key) end, Changed = function (key) end })
+```
+
+Every element also has `:SetTitle`, `:SetDesc`, `:SetVisible`, `:Destroy`, and `:SetCallback` where it makes sense.
+Callbacks run in a protected call, so an error in your callback prints a warning and does not break the UI.
+
+Scrolling: pressing a card and dragging scrolls the page. A click is counted only if the pointer moved less than 10 px.
+
+## Notifications
+
+```lua
+UI:Notify({ Title = "Saved", Content = "Config saved", Duration = 4 })
+```
+
+## Themes
+
+```lua
+UI:GetThemeNames()          -- { "Dark", "Light", "Glass", "Rose", ... }
+UI:SetTheme("Glass")        -- all windows change live with a smooth fade
+
+UI:AddTheme({
+    Name = "Mine",
+    Background = Color3.fromRGB(14, 15, 21), Panel = Color3.fromRGB(23, 24, 32),
+    Element = Color3.fromRGB(32, 34, 44),    Popup = Color3.fromRGB(27, 28, 38),
+    Text = Color3.new(1, 1, 1), SubText = Color3.fromRGB(170, 175, 190),
+    Primary = Color3.fromRGB(0, 145, 255),   Outline = Color3.fromRGB(60, 64, 80),
+    Alpha = { Background = 0.1, Panel = 0.2, Element = 0.2, Popup = 0.05 },   -- 0 solid .. 1 invisible
+    StrokeAlpha = 0.5, Gloss = 0.8,
+})
+```
+
+Missing fields fall back to the Dark theme.
+
+## Icons
+
+Use an icon by name in `Icon = "..."`. Names without a prefix come from Lucide; other sets use a prefix: `"solar:bell-bold"`, `"gravity:camera"`.
+
+```lua
+UI.Icons:SetBundle("Lumen_Icons.lua")                  -- one file with all sets
+UI.Icons:Register("my-icon", "rbxassetid://123456")    -- your own image or a text glyph
+UI.Icons:AddPack("mypack", { home = 123456 }, false)   -- your own set
+```
+
+Old Lucide names such as `home`, `alert-triangle`, `check-circle` are understood and mapped to the current names.
+
+## Files
+
+| File | What it is |
+| --- | --- |
+| `Lumen.lua` | The library |
+| `Lumen_Icons.lua` | Optional bundle of icon sets (about 1.3 MB) |
+| `Lumen_Test.lua` | Test script, one tab per feature |
+
+## Credits and licenses
+
+Lumen itself is licensed under **<choose a license, e.g. MIT>**.
+
+The icon bundle is generated from the icon sets below. Check each license before you redistribute the bundle:
+
+- Lucide: ISC License
+- lucide-roblox sprite sheets: MIT License
+- Icon packaging (asset IDs and name tables): MIT License, Footagesus/Icons. See `THIRD_PARTY_LICENSES.md`
+- The artwork itself keeps the license of each original set (for example Gravity UI icons are MIT, Solar is CC BY 4.0). Check the sets you ship
+
+The API was inspired by other Roblox UI libraries such as WindUI.
