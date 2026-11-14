@@ -360,7 +360,7 @@ function UI:CreateWindow(config)
     corner(killButton, 8)
     stroke(killButton, "Outline")
 
-    for _, info in ipairs({ { closeButton, "minus", "-"}, { killButton, "x", "×"} }) do
+    for _, info in ipairs({ { closeButton, tostring(config.MinimizeIcon or "chevron-down"), "-"}, { killButton, tostring(config.CloseIcon or "circle-x"), "×"} }) do
         local button, iconName, glyph = info[1], info[2], info[3]
         local icon = UI.Icons and UI.Icons:Create(button, iconName, 14)
         if icon then
