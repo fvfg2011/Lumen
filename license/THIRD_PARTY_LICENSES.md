@@ -135,6 +135,6 @@ The icon files come from Footagesus/Icons, which credits these sources in its RE
 | Set in Lumen | Original project | License (verify on the project page) |
 | --- | --- | --- |
 | Lucide | https://github.com/lucide-icons/lucide | ISC, some icons MIT (Feather), full text above |
-| Solar | https://icones.js.org/collection/solar | MIT, full text below |
-| Gravity UI icons | https://github.com/gravity-ui/icons | MIT, full text below |
+| Solar | https://icones.js.org/collection/solar | MIT, full text above |
+| Gravity UI icons | https://github.com/gravity-ui/icons | MIT, full text above |
 | Craft (free library) | https://www.figma.com/design/RHbpN7rR3DhGIfZ5tQyvp7/Craft-Icons---Free-Icon-Library--Community- | CC BY 4.0 (stated on the Figma Community page) |
