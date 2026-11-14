@@ -155,7 +155,7 @@ Old Lucide names such as `home`, `alert-triangle`, `check-circle` are understood
 
 ## Credits and licenses
 
-Lumen itself is licensed under **<choose a license, e.g. MIT>**.
+Lumen itself is licensed under **MIT**.
 
 The icon bundle is generated from the icon sets below. Check each license before you redistribute the bundle:
 
