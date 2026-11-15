@@ -52,6 +52,8 @@ local window = UI:CreateWindow({
     Settings = true,               -- false: the settings page keeps ONLY the language choice. { BarLabels = false, Timing = false } hides single groups
     ConfirmClose = true,           -- the "×" button asks "Close the window?" first (ConfirmTitle / ConfirmText / ConfirmYes / ConfirmNo change the texts)
     SaveDock = true,               -- remembers the chosen side in a small file in the workspace (DockFile = "name.txt" to rename it)
+    MinimizeIcon = "solar:minimize-square-3-linear",   -- icons of the header buttons (these are the defaults; without the bundle Lucide / a text symbol is used)
+    CloseIcon = "solar:close-square-linear",
     Blur = false,                  -- off by default; BlurMode = "Screen" blurs the whole view
 })
 ```
@@ -74,7 +76,7 @@ The four dock buttons in the window header are always there, so every hub built 
 - Folds back after `RailCollapseAfter` seconds without activity.
 - Width follows the longest tab name (measured in pixels). A sub-tab widens the panel only if its name plus indent is longer.
 - Left / Right: sub-tabs sit under their parent with a tree line, and stay visible as small icons when the panel is folded. A dot marks tabs that have sub-tabs. A tab without an icon shows its first letter.
-- Top / Bottom: icons only, sub-tabs appear to the right of the parent.
+- Top / Bottom: icons only, sub-tabs appear to the right of the parent. With names switched on (`BarLabels` or the settings page), tab names sit on the outer side of the icons (above them at the top, below them at the bottom), and the names of the open tab's sub-tabs on the inner side. A sub-tab cell grows to fit its name, so neighbours never overlap.
 
 ## Languages and the settings button
 
@@ -197,7 +199,7 @@ Old Lucide names such as `home`, `alert-triangle`, `check-circle` are understood
 | File | What it is |
 | --- | --- |
 | `Lumen.lua` | The library |
-| `Lumen_Icons.lua` | Optional bundle of icon sets (about 1.3 MB) |
+| `Lumen_Icons.lua` | Optional bundle of icon sets (about 0.6 MB) |
 | `Lumen_Test.lua` | Test script, one tab per feature |
 
 ## Credits and licenses
@@ -209,11 +211,12 @@ The icon bundle is generated from the icon sets below. Check each license before
 - Lucide: ISC License
 - lucide-roblox sprite sheets: MIT License
 - Icon packaging (asset IDs and name tables): MIT License, Footagesus/Icons. See `THIRD_PARTY_LICENSES.md`
-- The artwork itself keeps the license of each original set (for example Gravity UI icons are MIT, Solar is CC BY 4.0). Check the sets you ship
+- Solar icons by 480 Design, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/); Craft Icons by eusha, CC BY 4.0. Both were converted to Roblox image assets and renamed. Please keep this credit if you ship the bundle
+- The artwork itself keeps the license of each original set (Gravity UI icons are MIT). Check the sets you ship
 
 I am also waiting for your suggestions for changes/additions to the library
 
-I also have my own hub for Cameraman TD, which already uses Lumen library. I'm sure it will be useful for you to see how it looks in game, not just in code.
+I also have my own hub for [Cameraman TD](https://github.com/fvfg2011/REPLACE_WITH_HUB_LINK), which already uses Lumen library. I'm sure it will be useful for you to see how it looks in game, not just in code.
 
 I hope that my library will be useful to you.
 Created by Nick(Fvfg2O11) in 2026

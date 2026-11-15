@@ -360,9 +360,15 @@ function UI:CreateWindow(config)
     corner(killButton, 8)
     stroke(killButton, "Outline")
 
-    for _, info in ipairs({ { closeButton, tostring(config.MinimizeIcon or "minus"), "-"}, { killButton, tostring(config.CloseIcon or "x"), "×"} }) do
-        local button, iconName, glyph = info[1], info[2], info[3]
-        local icon = UI.Icons and UI.Icons:Create(button, iconName, 14)
+    for _, info in ipairs({ { closeButton, config.MinimizeIcon, "solar:minimize-square-3-linear", "minus", "-"}, { killButton, config.CloseIcon, "solar:close-square-linear", "x", "×"} }) do
+        local button, glyph = info[1], info[5]
+        local icon
+        for _, iconName in ipairs(info[2] and { tostring(info[2]) } or { info[3], info[4] }) do
+            icon = UI.Icons and UI.Icons:Create(button, iconName, 14)
+            if icon then
+                break
+            end
+        end
         if icon then
             button.Text = ""
             icon.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -681,6 +687,34 @@ local function isBar(window)
     return window.Dock == "Top" or window.Dock == "Bottom"
 end
 
+local LABEL_BAND = 16
+local function barMetrics(window)
+    local labels = window.BarLabels == true
+    local hasSubs = false
+    for _, tab in ipairs(window.Tabs or {}) do
+        if tab.Children then
+            hasSubs = true
+            break
+        end
+    end
+    local outer = labels and LABEL_BAND or 0
+    local inner = (labels and hasSubs) and LABEL_BAND or 0
+    local m = { Height = ROW + outer + inner }
+    if window.Dock == "Top" then
+        m.IconY, m.TabLabelY, m.SubLabelY = outer, 0, outer + ROW + 2
+    else
+        m.IconY, m.TabLabelY, m.SubLabelY = inner, inner + ROW + 2, 0
+    end
+    return m
+end
+
+local function subCell(tab)
+    if tab.Window.BarLabels == true then
+        return math.max(BAR_CELL, tab.TextW11 + 8)
+    end
+    return BAR_CELL
+end
+
 local function newPage(window)
     local page = new("ScrollingFrame", { Visible = false, BackgroundTransparency = 1, BorderSizePixel = 0, Size = UDim2.fromScale(1, 1), ScrollBarThickness = 3, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y}, window.Content)
     new("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder}, page)
@@ -756,23 +790,24 @@ local function styleTab(tab, animate)
         tab.Dot.Visible = tab.Children ~= nil
     end
     if bar then
-        local labels = window.BarLabels == true and not sub
-        local rowHeight = labels and ROW + 16 or ROW
+        local m = barMetrics(window)
+        local labels = window.BarLabels == true
+        local height = m.Height
         if sub then
-            tab.Row.Size = UDim2.fromOffset(BAR_CELL, ROW)
+            tab.Row.Size = UDim2.fromOffset(subCell(tab), height)
         else
-            tab.Row.Size = UDim2.fromOffset(labels and math.max(34, tab.TextW11 + 8) or 34, rowHeight)
+            tab.Row.Size = UDim2.fromOffset(labels and math.max(34, tab.TextW11 + 8) or 34, height)
             tab.Entry.AutomaticSize = Enum.AutomaticSize.X
-            tab.Entry.Size = UDim2.fromOffset(0, rowHeight)
+            tab.Entry.Size = UDim2.fromOffset(0, height)
             tab.EntryList.FillDirection = Enum.FillDirection.Horizontal
             if tab.Children then
                 tab.Children.AutomaticSize = Enum.AutomaticSize.X
-                tab.Children.Size = UDim2.fromOffset(0, ROW)
+                tab.Children.Size = UDim2.fromOffset(0, height)
                 tab.ChildrenList.FillDirection = Enum.FillDirection.Horizontal
             end
         end
         button.AnchorPoint = Vector2.new(0.5, 0)
-        button.Position = UDim2.new(0.5, 0, 0, 0)
+        button.Position = UDim2.new(0.5, 0, 0, m.IconY)
         button.Size = UDim2.fromOffset(sub and BAR_CELL - 2 or 32, ROW)
         icon.AnchorPoint = Vector2.new(0.5, 0.5)
         icon.Position = UDim2.fromScale(0.5, 0.5)
@@ -781,8 +816,8 @@ local function styleTab(tab, animate)
         if labels then
             label.Parent = tab.Row
             label.AnchorPoint = Vector2.new(0, 0)
-            label.Position = UDim2.fromOffset(0, ROW + 2)
-            label.Size = UDim2.new(1, 0, 0, 12)
+            label.Position = UDim2.fromOffset(0, sub and m.SubLabelY or m.TabLabelY)
+            label.Size = UDim2.new(1, 0, 0, 14)
             label.TextSize = 11
             label.TextXAlignment = Enum.TextXAlignment.Center
             label.TextTruncate = Enum.TextTruncate.None
@@ -872,7 +907,18 @@ local function applyHolder(tab, animate)
         return
     end
     local count = tab.Expanded and (tab.ChildCount or 0) or 0
-    local goal = isBar(tab.Window) and UDim2.fromOffset(count * BAR_CELL, ROW) or UDim2.new(1, 0, 0, count * ROW)
+    local goal
+    if isBar(tab.Window) then
+        local width = 0
+        if tab.Expanded then
+            for _, child in ipairs(tab.ChildTabs or {}) do
+                width = width + subCell(child)
+            end
+        end
+        goal = UDim2.fromOffset(width, barMetrics(tab.Window).Height)
+    else
+        goal = UDim2.new(1, 0, 0, count * ROW)
+    end
     if animate then
         UI.Tween(tab.Holder, { Size = goal}, 0.24, Enum.EasingStyle.Quad)
     else
@@ -915,6 +961,8 @@ function TabClass:Tab(config)
 
     local tab = setmetatable({ Window = window, Parent = self, Title = UI.Tr(config.Title), TitleSource = config.Title}, TabClass)
     tab.Entry, tab.Row = row, row
+    self.ChildTabs = self.ChildTabs or {}
+    self.ChildTabs[#self.ChildTabs + 1] = tab
     tab.Vertical, tab.Horizontal = vertical, horizontal
     tab.SideButton, tab.NameLabel, tab.Icon, tab.Pill = newButton(row, config, true)
     tab.TextW, tab.TextW11 = measure(UI.Tr(config.Title or "Tab"), 13), measure(UI.Tr(config.Title or "Tab"), 11)
@@ -974,6 +1022,14 @@ function UI:CreateWindow(config)
             end
         end
         sidebar.AnchorPoint = Vector2.new(0, 0)
+        if isBar(window) then
+            local m = barMetrics(window)
+            window.BarH, window.BarIconY = m.Height + 12, m.IconY
+            for _, tab in ipairs(window.Tabs) do
+                styleTab(tab, false)
+                applyHolder(tab, animate)
+            end
+        end
         local dock = window.Dock
         if dock == "Left" or dock == "Right" then
             local width = window.RailOpen and railWidth(window) or RAIL_MIN
@@ -1003,7 +1059,7 @@ function UI:CreateWindow(config)
                 apply(footer, { Size = UDim2.fromOffset(width - 12, ROW), Position = dock == "Left" and UDim2.new(0, 14, 1, -(14 + ROW)) or UDim2.new(1, -(8 + width - 6), 1, -(14 + ROW))})
             else
                 apply(window.SideScroll, { Size = UDim2.new(1, -46, 1, 0)})
-                apply(footer, { Size = UDim2.fromOffset(34, ROW), Position = dock == "Top" and UDim2.new(1, -(14 + 34), 0, 52) or UDim2.new(1, -(14 + 34), 1, -(2 + window.BarH))})
+                apply(footer, { Size = UDim2.fromOffset(34, ROW), Position = dock == "Top" and UDim2.new(1, -(14 + 34), 0, 52 + (window.BarIconY or 0)) or UDim2.new(1, -(14 + 34), 1, -(2 + window.BarH) + (window.BarIconY or 0))})
             end
         end
     end
@@ -1050,7 +1106,7 @@ function UI:CreateWindow(config)
             sidebar.AutomaticCanvasSize = Enum.AutomaticSize.X
             window.SideList.FillDirection = Enum.FillDirection.Horizontal
             window.Brand.Visible = false
-            window.BarH = (window.BarLabels and ROW + 16 or ROW) + 12
+            window.BarH = barMetrics(window).Height + 12
         else
             sidebar.ScrollingDirection = Enum.ScrollingDirection.Y
             sidebar.CanvasSize = UDim2.new()
