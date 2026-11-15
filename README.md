@@ -202,7 +202,7 @@ Old Lucide names such as `home`, `alert-triangle`, `check-circle` are understood
 
 ## Credits and licenses
 
-Lumen itself is licensed under **<choose a license, e.g. MIT>**.
+Lumen itself is licensed under **MIT**.
 
 The icon bundle is generated from the icon sets below. Check each license before you redistribute the bundle:
 
@@ -211,4 +211,9 @@ The icon bundle is generated from the icon sets below. Check each license before
 - Icon packaging (asset IDs and name tables): MIT License, Footagesus/Icons. See `THIRD_PARTY_LICENSES.md`
 - The artwork itself keeps the license of each original set (for example Gravity UI icons are MIT, Solar is CC BY 4.0). Check the sets you ship
 
-The API was inspired by other Roblox UI libraries such as WindUI.
+I am also waiting for your suggestions for changes/additions to the library
+
+I also have my own hub for Cameraman TD, which already uses Lumen library. I'm sure it will be useful for you to see how it looks in game, not just in code.
+
+I hope that my library will be useful to you.
+Created by Nick(Fvfg2O11) in 2026
