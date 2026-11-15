@@ -48,6 +48,8 @@ local window = UI:CreateWindow({
     RailExpandDelay = 3,           -- seconds before the names slide out at start
     RailCollapseAfter = 10,        -- seconds without activity before the panel folds back to icons
     DockChanged = function (side) end,
+    Language = "en",               -- default language; the choice made in Settings is remembered
+    Settings = true,               -- false: the settings page keeps ONLY the language choice. { BarLabels = false, Timing = false } hides single groups
     ConfirmClose = true,           -- the "×" button asks "Close the window?" first (ConfirmTitle / ConfirmText / ConfirmYes / ConfirmNo change the texts)
     SaveDock = true,               -- remembers the chosen side in a small file in the workspace (DockFile = "name.txt" to rename it)
     Blur = false,                  -- off by default; BlurMode = "Screen" blurs the whole view
@@ -74,6 +76,47 @@ The four dock buttons in the window header are always there, so every hub built 
 - Left / Right: sub-tabs sit under their parent with a tree line, and stay visible as small icons when the panel is folded. A dot marks tabs that have sub-tabs. A tab without an icon shows its first letter.
 - Top / Bottom: icons only, sub-tabs appear to the right of the parent.
 
+## Languages and the settings button
+
+Every window has a settings button: the last button of the side panel (the rightmost one in the top / bottom bar). It has no name; a hint appears next to it for a couple of seconds after the names slide out. The page contains:
+
+- **Language** (12 built-in languages: English, Русский, Українська, Español, Deutsch, Français, Português, Polski, Türkçe, Italiano, 中文, 日本語)
+- Names under the icons (only for the top / bottom panel)
+- Seconds of inactivity before the panel folds (not used when the panel is on the top or bottom)
+- Seconds after the script starts before the panel expands
+
+Time values can be set with the slider, or by tapping the number next to it and typing a value (it may be larger than the slider end). The choices are saved to `Lumen_<Title>_settings.json` in the executor workspace.
+
+The button sits below the list of tabs and never covers them: the tabs scroll above it, the button stays in place.
+
+The settings button cannot be removed, because the language choice must always be available. `Settings = false` only removes the other options and leaves the language choice on the page.
+
+### Making your own script multilingual
+
+Lumen translates **its own** texts (settings page, close confirmation, hints) by itself. The texts of **your** script are translated only if you write them as a **table** with one entry per language code instead of a plain string. A plain string is shown as it is in every language.
+
+```lua
+-- the key is the language code: en, ru, uk, es, de, fr, pt, pl, tr, it, zh, ja
+window:Tab({ Title = { en = "Main", ru = "Главное", de = "Start" }, Icon = "house" })
+tab:Section({ Title = { en = "Combat", ru = "Бой" } })
+tab:Button({ Title = { en = "Run", ru = "Запустить" }, Desc = { en = "Starts it", ru = "Запускает" }, Callback = function () end })
+UI:Notify({ Title = { en = "Saved", ru = "Сохранено" }, Content = { en = "Done", ru = "Готово" } })
+```
+
+What follows the language automatically: the `Title` and `Desc` of tabs, sub-tabs and every element (also after `:SetTitle` / `:SetDesc` with a table), and `Title` / `Content` of notifications.
+
+What does **not**: the window `Title` (it is also used for file names), the values of a dropdown, and plain strings. For those use `UI:T` and `UI:OnLanguageChanged` below.
+
+Rules: if the current language is missing in a table, English (`en`) is used, then the first entry. Write at least `en` in every table.
+
+```lua
+UI:AddLanguage("de", "Deutsch", { my_key = "..." })   -- add a language or your own texts
+UI:AddStrings("en", { my_key = "Hello" })             -- texts of your own script
+UI:T("my_key")                                        -- text in the current language (for dropdown values and anything else you set yourself)
+UI:SetLanguage("ru")
+UI:OnLanguageChanged(function (code) end)
+```
+
 ## Elements
 
 All elements are created on a tab and take a `Title` and an optional `Desc`.
@@ -90,7 +133,8 @@ toggle:Set(false)            -- runs the callback; toggle:Set(false, true) does 
 toggle:Get()
 
 tab:Slider({ Title = "Value", Step = 1, Value = { Min = 0, Max = 100, Default = 20 }, Live = false, Callback = function (n) end })
--- by default the callback runs when you release the slider; Live = true runs it while dragging
+-- by default the callback runs when you release the slider; Live = true runs it while dragging.
+-- tap the number to type a value; TypedMax = 600 lets the typed value go above the slider end
 
 tab:Input({ Title = "Name", Placeholder = "type here", Type = "Input", Callback = function (text) end })   -- Type = "Textarea" for several lines
 
@@ -143,6 +187,8 @@ UI.Icons:SetBundle("Lumen_Icons.lua")                  -- one file with all sets
 UI.Icons:Register("my-icon", "rbxassetid://123456")    -- your own image or a text glyph
 UI.Icons:AddPack("mypack", { home = 123456 }, false)   -- your own set
 ```
+
+Solar names have a style at the end (`-bold`, `-linear`, `-outline`, `-broken`, `-line-duotone`, `-bold-duotone`). A name without a style, such as `"solar:bell"`, takes the first style that exists. If an icon is not found, the console shows a line starting with `[Lumen] icon`: it says whether the set could not be loaded (check that the newest `Lumen_Icons.lua` is in the workspace and `UI.Icons:SetBundle("Lumen_Icons.lua")` is called before the window is created).
 
 Old Lucide names such as `home`, `alert-triangle`, `check-circle` are understood and mapped to the current names.
 

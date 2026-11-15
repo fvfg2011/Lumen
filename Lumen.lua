@@ -244,9 +244,9 @@ function UI:Notify(config)
     stroke(card, "Primary")
     padding(card, 8)
     new("UIListLayout", { Padding = UDim.new(0, 2)}, card)
-    local title = new("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 16), Font = Enum.Font.GothamBold, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, Text = tostring(config.Title or "Notification")}, card)
+    local title = new("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 16), Font = Enum.Font.GothamBold, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, Text = UI.Tr(config.Title or "Notification")}, card)
     bindTheme(title, "TextColor3", "Text")
-    local body = new("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Font = Enum.Font.Gotham, TextSize = 12, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, Text = tostring(config.Content or "")}, card)
+    local body = new("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Font = Enum.Font.Gotham, TextSize = 12, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, Text = UI.Tr(config.Content or "")}, card)
     bindTheme(body, "TextColor3", "SubText")
     task.delay(tonumber(config.Duration) or 4, function ()
         if card.Parent then
@@ -360,7 +360,7 @@ function UI:CreateWindow(config)
     corner(killButton, 8)
     stroke(killButton, "Outline")
 
-    for _, info in ipairs({ { closeButton, tostring(config.MinimizeIcon or "chevron-down"), "-"}, { killButton, tostring(config.CloseIcon or "circle-x"), "×"} }) do
+    for _, info in ipairs({ { closeButton, tostring(config.MinimizeIcon or "minus"), "-"}, { killButton, tostring(config.CloseIcon or "x"), "×"} }) do
         local button, iconName, glyph = info[1], info[2], info[3]
         local icon = UI.Icons and UI.Icons:Create(button, iconName, 14)
         if icon then
@@ -385,9 +385,9 @@ function UI:CreateWindow(config)
         padding(box, 14)
         new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder}, box)
         local scale = new("UIScale", { Scale = 0.9}, box)
-        local heading = new("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 18), Font = Enum.Font.GothamBold, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Text = tostring(config.ConfirmTitle or "Close the window?"), LayoutOrder = 1}, box)
+        local heading = new("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 18), Font = Enum.Font.GothamBold, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, Text = tostring(config.ConfirmTitle or (UI.T and UI:T("confirm_title")) or "Close the window?"), LayoutOrder = 1}, box)
         bindTheme(heading, "TextColor3", "Text")
-        local body = new("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Font = Enum.Font.Gotham, TextSize = 12, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, Text = tostring(config.ConfirmText or "The window will be removed. Use the minimize button to just hide it."), LayoutOrder = 2}, box)
+        local body = new("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Font = Enum.Font.Gotham, TextSize = 12, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, Text = tostring(config.ConfirmText or (UI.T and UI:T("confirm_text")) or "The window will be removed. Use the minimize button to just hide it."), LayoutOrder = 2}, box)
         bindTheme(body, "TextColor3", "SubText")
         local row = new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 30), LayoutOrder = 3}, box)
         new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder}, row)
@@ -402,12 +402,12 @@ function UI:CreateWindow(config)
                 end
             end)
         end
-        local noButton = new("TextButton", { Size = UDim2.new(0.5, -4, 1, 0), Font = Enum.Font.GothamMedium, TextSize = 12, AutoButtonColor = false, Text = tostring(config.ConfirmNo or "Cancel"), LayoutOrder = 1}, row)
+        local noButton = new("TextButton", { Size = UDim2.new(0.5, -4, 1, 0), Font = Enum.Font.GothamMedium, TextSize = 12, AutoButtonColor = false, Text = tostring(config.ConfirmNo or (UI.T and UI:T("confirm_no")) or "Cancel"), LayoutOrder = 1}, row)
         bindTheme(noButton, "BackgroundColor3", "Element")
         bindTheme(noButton, "TextColor3", "Text")
         corner(noButton, 8)
         stroke(noButton, "Outline")
-        local yesButton = new("TextButton", { Size = UDim2.new(0.5, -4, 1, 0), BackgroundColor3 = Color3.fromRGB(205, 65, 65), TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 12, AutoButtonColor = false, Text = tostring(config.ConfirmYes or "Close"), LayoutOrder = 2}, row)
+        local yesButton = new("TextButton", { Size = UDim2.new(0.5, -4, 1, 0), BackgroundColor3 = Color3.fromRGB(205, 65, 65), TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.GothamBold, TextSize = 12, AutoButtonColor = false, Text = tostring(config.ConfirmYes or (UI.T and UI:T("confirm_yes")) or "Close"), LayoutOrder = 2}, row)
         corner(yesButton, 8)
         noButton.MouseButton1Click:Connect(function ()
             choose(false)
@@ -460,14 +460,17 @@ function UI:CreateWindow(config)
         end)
     end
 
-    local sidebar = new("ScrollingFrame", { Name = "Sidebar", Position = UDim2.fromOffset(8, 46), Size = UDim2.new(0, 152, 1, -54), BorderSizePixel = 0, ScrollBarThickness = 2, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y}, main)
+    local sidebar = new("Frame", { Name = "Sidebar", Position = UDim2.fromOffset(8, 46), Size = UDim2.new(0, 152, 1, -54), BorderSizePixel = 0}, main)
     bindTheme(sidebar, "BackgroundColor3", "Panel")
     corner(sidebar, 10)
     stroke(sidebar, "Outline")
     new("UIGradient", { Rotation = 90, Transparency = NumberSequence.new(0, 0.3)}, sidebar)
-    padding(sidebar, 6)
-    window.SideList = new("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder}, sidebar)
-    local brand = new("Frame", { Name = "Brand", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 34), LayoutOrder = -1}, sidebar)
+
+    local scroll = new("ScrollingFrame", { Name = "SideScroll", BackgroundTransparency = 1, BorderSizePixel = 0, Size = UDim2.fromScale(1, 1), ScrollBarThickness = 2, CanvasSize = UDim2.new(), AutomaticCanvasSize = Enum.AutomaticSize.Y}, sidebar)
+    window.SideScroll = scroll
+    window.SidebarPad = padding(scroll, 6)
+    window.SideList = new("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder}, scroll)
+    local brand = new("Frame", { Name = "Brand", BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 34), LayoutOrder = -1}, scroll)
     local brandTitle = new("TextLabel", { BackgroundTransparency = 1, Position = UDim2.fromOffset(6, 4), Size = UDim2.new(1, -12, 0, 20), Font = Enum.Font.GothamBold, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd, Text = tostring(config.Title or "Window")}, brand)
     bindTheme(brandTitle, "TextColor3", "Text")
     window.BrandTexts = {}
@@ -634,6 +637,28 @@ function UI.Icons:Create(parent, name, size)
     return nil
 end
 
+function UI.FirstLetter(value)
+    local text = UI.Tr(value)
+    local ok, last = pcall(utf8.offset, text, 2)
+    local letter = ok and last and text:sub(1, last - 1) or text:sub(1, 1)
+    if letter == "" then
+        letter = "?"
+    end
+    return string.upper(letter)
+end
+
+function UI.Tr(value)
+    if type(value) == "table" then
+        local text = value[UI.Language or "en"] or value.en
+        if text == nil then
+            local _, first = next(value)
+            text = first
+        end
+        return tostring(text == nil and "" or text)
+    end
+    return tostring(value == nil and "" or value)
+end
+
 local TextService = game:GetService("TextService")
 local TabClass = {}
 TabClass.__index = TabClass
@@ -673,10 +698,11 @@ local function newButton(parent, config, isSub)
     local size = isSub and 14 or 16
     local icon = UI.Icons:Create(button, config.Icon, size)
     if not icon then
-        icon = new("TextLabel", { BackgroundTransparency = 1, Size = UDim2.fromOffset(size, size), Font = Enum.Font.GothamBold, TextSize = size - 2, Text = string.upper(string.sub(tostring(config.Title or "?"), 1, 1))}, button)
+        icon = new("TextLabel", { BackgroundTransparency = 1, Size = UDim2.fromOffset(size, size), Font = Enum.Font.GothamBold, TextSize = size - 2, Text = UI.FirstLetter(config.Title or "?")}, button)
+        icon:SetAttribute("Letter", true)
         bindTheme(icon, "TextColor3", "Text")
     end
-    local label = new("TextLabel", { BackgroundTransparency = 1, Font = Enum.Font.GothamMedium, TextSize = 13, TextTruncate = Enum.TextTruncate.AtEnd, Text = tostring(config.Title or "Tab")}, button)
+    local label = new("TextLabel", { BackgroundTransparency = 1, Font = Enum.Font.GothamMedium, TextSize = 13, TextTruncate = Enum.TextTruncate.AtEnd, Text = UI.Tr(config.Title or "Tab")}, button)
     bindTheme(label, "TextColor3", "SubText")
     return button, label, icon, pill
 end
@@ -827,6 +853,16 @@ function TabClass:SetActive(active)
         UI.Tween(pill, { Size = isBar(self.Window) and UDim2.fromOffset(length, 3) or UDim2.fromOffset(3, length), BackgroundTransparency = active and 0 or 1}, 0.2)
     end
 end
+
+function TabClass:Retitle()
+    local text = UI.Tr(self.TitleSource or "Tab")
+    self.Title = text
+    self.NameLabel.Text = text
+    self.TextW, self.TextW11 = measure(text, 13), measure(text, 11)
+    if self.Icon and self.Icon:GetAttribute("Letter") then
+        self.Icon.Text = UI.FirstLetter(text)
+    end
+end
 function TabClass:Select()
     self.Window:SelectTab(self)
 end
@@ -877,11 +913,11 @@ function TabClass:Tab(config)
     vertical.Size = UDim2.new(0, 1, 0.5, 0)
     self.LastSegment = vertical
 
-    local tab = setmetatable({ Window = window, Parent = self, Title = config.Title}, TabClass)
+    local tab = setmetatable({ Window = window, Parent = self, Title = UI.Tr(config.Title), TitleSource = config.Title}, TabClass)
     tab.Entry, tab.Row = row, row
     tab.Vertical, tab.Horizontal = vertical, horizontal
     tab.SideButton, tab.NameLabel, tab.Icon, tab.Pill = newButton(row, config, true)
-    tab.TextW, tab.TextW11 = measure(tostring(config.Title or "Tab"), 13), measure(tostring(config.Title or "Tab"), 11)
+    tab.TextW, tab.TextW11 = measure(UI.Tr(config.Title or "Tab"), 13), measure(UI.Tr(config.Title or "Tab"), 11)
     tab.Page = newPage(window)
     tab.Container = tab.Page
     window.Tabs[#window.Tabs + 1] = tab
@@ -923,6 +959,8 @@ function UI:CreateWindow(config)
     window.RailOpen = false
     window.RailStart = os.clock()
     window.LastActive = os.clock()
+    window.RailExpandDelay = tonumber(config.RailExpandDelay) or 3
+    window.RailCollapseAfter = tonumber(config.RailCollapseAfter) or 10
 
     function window:Layout(animate, seconds)
         local sidebar, content = window.Sidebar, window.Content
@@ -955,6 +993,18 @@ function UI:CreateWindow(config)
             local height = window.BarH
             apply(sidebar, { Position = UDim2.new(0, 8, 1, -(8 + height)), Size = UDim2.new(1, -16, 0, height)})
             apply(content, { Position = UDim2.fromOffset(8, 44), Size = UDim2.new(1, -16, 1, -(44 + height + 6 + 8))})
+        end
+
+        local footer, pad = window.Footer, window.SidebarPad
+        if footer and pad then
+            if dock == "Left" or dock == "Right" then
+                local width = window.RailWidth
+                apply(window.SideScroll, { Size = UDim2.new(1, 0, 1, -(ROW + 12))})
+                apply(footer, { Size = UDim2.fromOffset(width - 12, ROW), Position = dock == "Left" and UDim2.new(0, 14, 1, -(14 + ROW)) or UDim2.new(1, -(8 + width - 6), 1, -(14 + ROW))})
+            else
+                apply(window.SideScroll, { Size = UDim2.new(1, -46, 1, 0)})
+                apply(footer, { Size = UDim2.fromOffset(34, ROW), Position = dock == "Top" and UDim2.new(1, -(14 + 34), 0, 52) or UDim2.new(1, -(14 + 34), 1, -(2 + window.BarH))})
+            end
         end
     end
 
@@ -992,7 +1042,7 @@ function UI:CreateWindow(config)
             return
         end
         window.Dock = key
-        local sidebar = window.Sidebar
+        local sidebar = window.SideScroll
         if isBar(window) then
             window.RailOpen = false
             sidebar.ScrollingDirection = Enum.ScrollingDirection.X
@@ -1065,12 +1115,12 @@ function UI:CreateWindow(config)
     end
     function window:Tab(tabConfig)
         tabConfig = tabConfig or {}
-        local entry = new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = #window.Tabs + 1}, window.Sidebar)
+        local entry = new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = #window.Tabs + 1}, window.SideScroll)
         local entryList = new("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder}, entry)
-        local tab = setmetatable({ Window = window, Title = tabConfig.Title, Entry = entry, EntryList = entryList}, TabClass)
+        local tab = setmetatable({ Window = window, Title = UI.Tr(tabConfig.Title), TitleSource = tabConfig.Title, Entry = entry, EntryList = entryList}, TabClass)
         tab.Row = new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, ROW), LayoutOrder = 0}, entry)
         tab.SideButton, tab.NameLabel, tab.Icon, tab.Pill = newButton(tab.Row, tabConfig, false)
-        tab.TextW, tab.TextW11 = measure(tostring(tabConfig.Title or "Tab"), 13), measure(tostring(tabConfig.Title or "Tab"), 11)
+        tab.TextW, tab.TextW11 = measure(UI.Tr(tabConfig.Title or "Tab"), 13), measure(UI.Tr(tabConfig.Title or "Tab"), 11)
         tab.Page = newPage(window)
         tab.Container = tab.Page
         window.Tabs[#window.Tabs + 1] = tab
@@ -1113,10 +1163,10 @@ function UI:CreateWindow(config)
             end
             if not isBar(window) then
                 local now = os.clock()
-                if not window.RailAuto and now - window.RailStart >= (tonumber(config.RailExpandDelay) or 3) then
+                if not window.RailAuto and now - window.RailStart >= window.RailExpandDelay then
                     window.RailAuto = true
                     window:SetRail(true)
-                elseif window.RailOpen and not window.Hovering and now - window.LastActive >= (tonumber(config.RailCollapseAfter) or 10) then
+                elseif window.RailOpen and not window.Hovering and now - window.LastActive >= window.RailCollapseAfter then
                     window:SetRail(false)
                 end
             end
@@ -1158,21 +1208,43 @@ function UI.NewCard(tab, config)
     local pad = padding(frame, 10)
     local body = new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y}, frame)
     new("UIListLayout", { Padding = UDim.new(0, 2), SortOrder = Enum.SortOrder.LayoutOrder}, body)
-    local title = new("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Font = Enum.Font.GothamMedium, TextSize = 13, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, Text = tostring(config.Title or ""), LayoutOrder = 1}, body)
+    local title = new("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Font = Enum.Font.GothamMedium, TextSize = 13, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, Text = UI.Tr(config.Title or ""), LayoutOrder = 1}, body)
     bindTheme(title, "TextColor3", "Text")
-    local desc = new("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Font = Enum.Font.Gotham, TextSize = 12, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, Text = tostring(config.Desc or ""), Visible = config.Desc ~= nil and config.Desc ~= "", LayoutOrder = 2}, body)
+    local desc = new("TextLabel", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Font = Enum.Font.Gotham, TextSize = 12, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, Text = UI.Tr(config.Desc or ""), Visible = config.Desc ~= nil and config.Desc ~= "", LayoutOrder = 2}, body)
     bindTheme(desc, "TextColor3", "SubText")
-    return setmetatable({ Tab = tab, Frame = frame, Body = body, TitleLabel = title, DescLabel = desc, Padding = pad}, ElementClass)
+    local element = setmetatable({ Tab = tab, Frame = frame, Body = body, TitleLabel = title, DescLabel = desc, Padding = pad, TitleSource = config.Title, DescSource = config.Desc}, ElementClass)
+    UI.Localize(tab, element)
+    return element
 end
 
 function ElementClass:ReserveRight(pixels)
     self.Padding.PaddingRight = UDim.new(0, 10 + pixels)
 end
-function ElementClass:SetTitle(text)
-    self.TitleLabel.Text = tostring(text or "")
+
+function UI.Localize(tab, element)
+    local window = tab.Window
+    if window then
+        window.Localized = window.Localized or {}
+        window.Localized[#window.Localized + 1] = element
+    end
 end
-function ElementClass:SetDesc(text)
-    text = tostring(text or "")
+function ElementClass:Relocalize()
+    if type(self.TitleSource) == "table" then
+        self.TitleLabel.Text = UI.Tr(self.TitleSource)
+    end
+    if type(self.DescSource) == "table" then
+        self:SetDesc(self.DescSource, true)
+    end
+end
+function ElementClass:SetTitle(text)
+    self.TitleSource = text
+    self.TitleLabel.Text = UI.Tr(text)
+end
+function ElementClass:SetDesc(text, keepSource)
+    if not keepSource then
+        self.DescSource = text
+    end
+    text = UI.Tr(text)
     self.DescLabel.Text = text
     self.DescLabel.Visible = text ~= ""
 end
@@ -1186,14 +1258,16 @@ end
 function UI.TabClass:Section(config)
     config = config or {}
     local frame = new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 28), LayoutOrder = nextOrder(self)}, self.Container)
-    local label = new("TextLabel", { BackgroundTransparency = 1, Position = UDim2.fromOffset(12, 4), Size = UDim2.new(1, -14, 0, 18), Font = Enum.Font.GothamBold, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, Text = tostring(config.Title or "")}, frame)
+    local label = new("TextLabel", { BackgroundTransparency = 1, Position = UDim2.fromOffset(12, 4), Size = UDim2.new(1, -14, 0, 18), Font = Enum.Font.GothamBold, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left, Text = UI.Tr(config.Title or "")}, frame)
     bindTheme(label, "TextColor3", "Primary")
     local bar = new("Frame", { BorderSizePixel = 0, Position = UDim2.fromOffset(2, 7), Size = UDim2.fromOffset(3, 12)}, frame)
     corner(bar, 2)
     bindTheme(bar, "BackgroundColor3", "Primary")
     local line = new("Frame", { BorderSizePixel = 0, Position = UDim2.new(0, 0, 1, -3), Size = UDim2.new(1, 0, 0, 1)}, frame)
     bindTheme(line, "BackgroundColor3", "Outline")
-    return setmetatable({ Tab = self, Frame = frame, TitleLabel = label, DescLabel = { Visible = false}}, ElementClass)
+    local element = setmetatable({ Tab = self, Frame = frame, TitleLabel = label, DescLabel = { Visible = false}, TitleSource = config.Title}, ElementClass)
+    UI.Localize(self, element)
+    return element
 end
 
 function UI.TabClass:Paragraph(config)
@@ -1339,19 +1413,21 @@ function UI.TabClass:Slider(config)
         step = 1
     end
     local decimals = #(tostring(step):match("%.(%d+)") or "")
-    local function snap(value)
-        value = math.clamp(tonumber(value) or min, min, max)
-        value = math.clamp(min + math.floor((value - min) / step + 0.5) * step, min, max)
+    local hardMax = math.max(max, tonumber(config.TypedMax) or max)
+    local function snap(value, typed)
+        local top = typed and hardMax or max
+        value = math.clamp(tonumber(value) or min, min, top)
+        value = math.clamp(min + math.floor((value - min) / step + 0.5) * step, min, top)
         local factor = 10 ^ decimals
         return math.floor(value * factor + 0.5) / factor
     end
 
     local element = UI.NewCard(self, config)
     element.Callback = config.Callback
-    element.Value = snap(range.Default or (type(config.Value) == "number" and config.Value) or min)
+    element.Value = snap(range.Default or (type(config.Value) == "number" and config.Value) or min, true)
 
     local row = new("Frame", { BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 24), LayoutOrder = 3}, element.Body)
-    local valueLabel = new("TextLabel", { BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, 0, 0.5, 0), Size = UDim2.fromOffset(46, 20), Font = Enum.Font.GothamMedium, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Right}, row)
+    local valueLabel = new("TextBox", { BackgroundTransparency = 1, ClearTextOnFocus = true,  AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, 0, 0.5, 0), Size = UDim2.fromOffset(46, 20), Font = Enum.Font.GothamMedium, TextSize = 12, TextXAlignment = Enum.TextXAlignment.Right}, row)
     bindTheme(valueLabel, "TextColor3", "Text")
     local track = new("Frame", { Position = UDim2.new(0, 0, 0.5, -3), Size = UDim2.new(1, -56, 0, 6)}, row)
     bindTheme(track, "BackgroundColor3", "Outline")
@@ -1365,12 +1441,21 @@ function UI.TabClass:Slider(config)
     local hit = new("TextButton", { BackgroundTransparency = 1, Text = "", Position = UDim2.new(0, 0, 0, 0), Size = UDim2.new(1, -56, 1, 0)}, row)
 
     local function render()
-        local alpha = (element.Value - min) / (max - min)
+        local alpha = math.clamp((element.Value - min) / (max - min), 0, 1)
         fill.Size = UDim2.fromScale(alpha, 1)
         knob.Position = UDim2.new(alpha, 0, 0.5, 0)
         valueLabel.Text = string.format("%." .. decimals .. "f", element.Value)
     end
     render()
+
+    valueLabel.FocusLost:Connect(function ()
+        local number = tonumber((valueLabel.Text:gsub(",", ".")))
+        if number then
+            element.Value = snap(number, true)
+            runCallback(element.Callback, element.Value)
+        end
+        render()
+    end)
 
     local dragging = false
     local activeType
@@ -1435,7 +1520,7 @@ function UI.TabClass:Slider(config)
     end)
 
     function element:Set(value, silent)
-        element.Value = snap(value)
+        element.Value = snap(value, true)
         render()
         if not silent then
             runCallback(element.Callback, element.Value)
@@ -1975,6 +2060,15 @@ local function lookup(prefix, key)
     if ALIASES[key] and packs[prefix] and packs[prefix][ALIASES[key]] then
         return normalize(packs[prefix][ALIASES[key]])
     end
+
+    if packs[prefix] then
+        local cleaned = tostring(key):lower():gsub("_", "-"):gsub("%s+", "-")
+        for _, suffix in ipairs({ "", "-bold", "-linear", "-outline", "-line-duotone", "-bold-duotone", "-broken", "-stroke", "-filled"}) do
+            if packs[prefix][cleaned .. suffix] then
+                return normalize(packs[prefix][cleaned .. suffix])
+            end
+        end
+    end
     return nil
 end
 
@@ -2074,13 +2168,24 @@ loadFromBundle = function (prefix)
     if type(bundle[prefix]) ~= "string" then
         return
     end
-    local ok, result = pcall(function ()
-        return loadstring(bundle[prefix])()
-    end)
+    local source = bundle[prefix]
+    local ok, result
+    if source:sub(1, 5) == "@flat" then
+
+        ok, result = true, {}
+        for name, id in source:gmatch("([^\n=]+)=(%d+)") do
+            result[name] = "rbxassetid://" .. id
+        end
+    else
+        ok, result = pcall(function ()
+            return loadstring(source)()
+        end)
+    end
     if ok and type(result) == "table" then
         register(result, prefix, false)
     end
 end
+UI.Icons.Warned = {}
 UI.Icons.Sets = { "lucide", "solar", "gravity", "craft"}
 function UI.Icons:SetBundle(path)
     local okFile, exists = pcall(isfile, path)
@@ -2123,7 +2228,15 @@ function UI.Icons:Resolve(name)
         prefix = "craft"
     end
     if prefix and (packs[prefix] or providers[prefix] or lazyFiles[prefix]) then
-        return lookup(prefix, key)
+        local found = lookup(prefix, key)
+        if not found and not UI.Icons.Warned[name] then
+            UI.Icons.Warned[name] = true
+            warn("[Lumen] icon '" .. name .. "' was not found (set '" .. prefix .. "' is " .. (packs[prefix] and "loaded" or "empty - is Lumen_Icons.lua the newest bundle?") .. ")")
+        end
+        return found
+    elseif prefix and prefix ~= "rbxassetid" and UI.Icons.Sets and table.find(UI.Icons.Sets, prefix) and not UI.Icons.Warned[name] then
+        UI.Icons.Warned[name] = true
+        warn("[Lumen] icon '" .. name .. "': the '" .. prefix .. "' set is not available - call UI.Icons:SetBundle(\"Lumen_Icons.lua\") first and make sure the file is in the workspace")
     end
     for _, defaultPrefix in ipairs(UI.Icons.Order) do
         local found = lookup(defaultPrefix, name)
@@ -2222,6 +2335,382 @@ function UI.TabClass:Keybind(config)
         element.Callback = callback
     end
     return element
+end
+
+local HttpService = game:GetService("HttpService")
+
+UI.Strings = {}
+UI.LanguageList = {}
+UI.LanguageListeners = {}
+UI.Language = "en"
+
+function UI:AddLanguage(code, name, strings)
+    code = tostring(code)
+    local known = UI.Strings[code]
+    if not known then
+        known = {}
+        UI.Strings[code] = known
+        UI.LanguageList[#UI.LanguageList + 1] = { Code = code, Name = tostring(name or code)}
+    elseif name then
+        for _, item in ipairs(UI.LanguageList) do
+            if item.Code == code then
+                item.Name = tostring(name)
+            end
+        end
+    end
+    for key, value in pairs(strings or {}) do
+        known[key] = value
+    end
+end
+function UI:AddStrings(code, strings)
+    UI:AddLanguage(code, nil, strings)
+end
+function UI:T(key)
+    local current = UI.Strings[UI.Language]
+    local english = UI.Strings.en
+    return (current and current[key]) or (english and english[key]) or tostring(key)
+end
+function UI:SetLanguage(code, silent)
+    code = tostring(code)
+    if not UI.Strings[code] then
+        return false
+    end
+    UI.Language = code
+    if not silent then
+        for index = #UI.LanguageListeners, 1, -1 do
+            local ok, keep = pcall(UI.LanguageListeners[index], code)
+            if ok and keep == false then
+                table.remove(UI.LanguageListeners, index)
+            end
+        end
+    end
+    return true
+end
+function UI:OnLanguageChanged(callback)
+    local item = function (code)
+        return callback(code)
+    end
+    UI.LanguageListeners[#UI.LanguageListeners + 1] = item
+    return { Disconnect = function ()
+        for index, value in ipairs(UI.LanguageListeners) do
+            if value == item then
+                table.remove(UI.LanguageListeners, index)
+                break
+            end
+        end
+    end }
+end
+
+UI:AddLanguage("en", "English", { settings = "Settings", general = "General", language = "Language", language_desc = "Language of the window texts", bar_labels = "Names under icons", bar_labels_desc = "Only when the panel is on the top or bottom", timing = "Tab panel timing", idle_slider = "Fold after inactivity (seconds)", idle_note = "Does not apply when the panel is on the top or bottom.", idle_input = "Type the value (seconds)", delay_slider = "Expand after start (seconds)", delay_desc = "How many seconds after the script starts the panel shows the names. Used from the next start.", delay_input = "Type the value (seconds)", confirm_title = "Close the window?", confirm_text = "The window will be removed. Use the minimize button to just hide it.", confirm_yes = "Close", confirm_no = "Cancel" })
+UI:AddLanguage("ru", "Русский", { settings = "Настройки", general = "Общие", language = "Язык", language_desc = "Язык текстов окна", bar_labels = "Названия под значками", bar_labels_desc = "Только когда панель сверху или снизу", timing = "Время панели вкладок", idle_slider = "Сворачивать после бездействия (секунд)", idle_note = "Не действует, когда панель сверху или снизу.", idle_input = "Впишите значение (секунд)", delay_slider = "Раскрыть после запуска (секунд)", delay_desc = "Через сколько секунд после запуска скрипта панель покажет названия. Действует со следующего запуска.", delay_input = "Впишите значение (секунд)", confirm_title = "Закрыть окно?", confirm_text = "Окно будет удалено. Чтобы просто спрятать его, используйте кнопку сворачивания.", confirm_yes = "Закрыть", confirm_no = "Отмена" })
+UI:AddLanguage("uk", "Українська", { settings = "Налаштування", general = "Загальні", language = "Мова", language_desc = "Мова текстів вікна", bar_labels = "Назви під значками", bar_labels_desc = "Лише коли панель зверху або знизу", timing = "Час панелі вкладок", idle_slider = "Згортати після бездіяльності (секунд)", idle_note = "Не діє, коли панель зверху або знизу.", idle_input = "Впишіть значення (секунд)", delay_slider = "Розгорнути після запуску (секунд)", delay_desc = "Через скільки секунд після запуску скрипта панель покаже назви. Діє з наступного запуску.", delay_input = "Впишіть значення (секунд)", confirm_title = "Закрити вікно?", confirm_text = "Вікно буде видалено. Щоб лише сховати його, скористайтеся кнопкою згортання.", confirm_yes = "Закрити", confirm_no = "Скасувати" })
+UI:AddLanguage("es", "Español", { settings = "Ajustes", general = "General", language = "Idioma", language_desc = "Idioma de los textos de la ventana", bar_labels = "Nombres bajo los iconos", bar_labels_desc = "Solo cuando el panel está arriba o abajo", timing = "Tiempos del panel de pestañas", idle_slider = "Plegar tras inactividad (segundos)", idle_note = "No se aplica cuando el panel está arriba o abajo.", idle_input = "Escribe el valor (segundos)", delay_slider = "Desplegar tras el inicio (segundos)", delay_desc = "Cuántos segundos después de iniciar el script el panel muestra los nombres. Se aplica en el próximo inicio.", delay_input = "Escribe el valor (segundos)", confirm_title = "¿Cerrar la ventana?", confirm_text = "La ventana se eliminará. Usa el botón de minimizar para solo ocultarla.", confirm_yes = "Cerrar", confirm_no = "Cancelar" })
+UI:AddLanguage("de", "Deutsch", { settings = "Einstellungen", general = "Allgemein", language = "Sprache", language_desc = "Sprache der Fenstertexte", bar_labels = "Namen unter den Symbolen", bar_labels_desc = "Nur wenn das Panel oben oder unten ist", timing = "Zeiten des Tab-Panels", idle_slider = "Nach Inaktivität einklappen (Sekunden)", idle_note = "Gilt nicht, wenn das Panel oben oder unten ist.", idle_input = "Wert eingeben (Sekunden)", delay_slider = "Nach dem Start ausklappen (Sekunden)", delay_desc = "Wie viele Sekunden nach dem Start des Skripts das Panel die Namen zeigt. Gilt ab dem nächsten Start.", delay_input = "Wert eingeben (Sekunden)", confirm_title = "Fenster schließen?", confirm_text = "Das Fenster wird entfernt. Nutze die Minimieren-Schaltfläche, um es nur auszublenden.", confirm_yes = "Schließen", confirm_no = "Abbrechen" })
+UI:AddLanguage("fr", "Français", { settings = "Paramètres", general = "Général", language = "Langue", language_desc = "Langue des textes de la fenêtre", bar_labels = "Noms sous les icônes", bar_labels_desc = "Uniquement quand le panneau est en haut ou en bas", timing = "Durées du panneau d'onglets", idle_slider = "Replier après inactivité (secondes)", idle_note = "Ne s'applique pas quand le panneau est en haut ou en bas.", idle_input = "Saisir la valeur (secondes)", delay_slider = "Déplier après le démarrage (secondes)", delay_desc = "Combien de secondes après le lancement du script le panneau affiche les noms. Appliqué au prochain démarrage.", delay_input = "Saisir la valeur (secondes)", confirm_title = "Fermer la fenêtre ?", confirm_text = "La fenêtre sera supprimée. Utilisez le bouton de réduction pour simplement la masquer.", confirm_yes = "Fermer", confirm_no = "Annuler" })
+UI:AddLanguage("pt", "Português", { settings = "Configurações", general = "Geral", language = "Idioma", language_desc = "Idioma dos textos da janela", bar_labels = "Nomes sob os ícones", bar_labels_desc = "Somente quando o painel está no topo ou embaixo", timing = "Tempos do painel de abas", idle_slider = "Recolher após inatividade (segundos)", idle_note = "Não se aplica quando o painel está no topo ou embaixo.", idle_input = "Digite o valor (segundos)", delay_slider = "Expandir após iniciar (segundos)", delay_desc = "Quantos segundos após iniciar o script o painel mostra os nomes. Vale a partir da próxima inicialização.", delay_input = "Digite o valor (segundos)", confirm_title = "Fechar a janela?", confirm_text = "A janela será removida. Use o botão de minimizar para apenas ocultá-la.", confirm_yes = "Fechar", confirm_no = "Cancelar" })
+UI:AddLanguage("pl", "Polski", { settings = "Ustawienia", general = "Ogólne", language = "Język", language_desc = "Język tekstów okna", bar_labels = "Nazwy pod ikonami", bar_labels_desc = "Tylko gdy panel jest u góry lub na dole", timing = "Czasy panelu kart", idle_slider = "Zwiń po bezczynności (sekundy)", idle_note = "Nie działa, gdy panel jest u góry lub na dole.", idle_input = "Wpisz wartość (sekundy)", delay_slider = "Rozwiń po uruchomieniu (sekundy)", delay_desc = "Po ilu sekundach od uruchomienia skryptu panel pokaże nazwy. Działa od następnego uruchomienia.", delay_input = "Wpisz wartość (sekundy)", confirm_title = "Zamknąć okno?", confirm_text = "Okno zostanie usunięte. Aby tylko je ukryć, użyj przycisku minimalizacji.", confirm_yes = "Zamknij", confirm_no = "Anuluj" })
+UI:AddLanguage("tr", "Türkçe", { settings = "Ayarlar", general = "Genel", language = "Dil", language_desc = "Pencere metinlerinin dili", bar_labels = "Simgelerin altında adlar", bar_labels_desc = "Yalnızca panel üstte veya altta olduğunda", timing = "Sekme paneli süreleri", idle_slider = "Hareketsizlikten sonra daralt (saniye)", idle_note = "Panel üstte veya altta olduğunda geçerli değildir.", idle_input = "Değeri yazın (saniye)", delay_slider = "Başlangıçtan sonra genişlet (saniye)", delay_desc = "Betik başladıktan kaç saniye sonra panelin adları göstereceği. Bir sonraki başlangıçta geçerli olur.", delay_input = "Değeri yazın (saniye)", confirm_title = "Pencere kapatılsın mı?", confirm_text = "Pencere kaldırılacak. Yalnızca gizlemek için küçültme düğmesini kullanın.", confirm_yes = "Kapat", confirm_no = "İptal" })
+UI:AddLanguage("it", "Italiano", { settings = "Impostazioni", general = "Generale", language = "Lingua", language_desc = "Lingua dei testi della finestra", bar_labels = "Nomi sotto le icone", bar_labels_desc = "Solo quando il pannello è in alto o in basso", timing = "Tempi del pannello delle schede", idle_slider = "Comprimi dopo inattività (secondi)", idle_note = "Non vale quando il pannello è in alto o in basso.", idle_input = "Inserisci il valore (secondi)", delay_slider = "Espandi dopo l'avvio (secondi)", delay_desc = "Dopo quanti secondi dall'avvio dello script il pannello mostra i nomi. Vale dal prossimo avvio.", delay_input = "Inserisci il valore (secondi)", confirm_title = "Chiudere la finestra?", confirm_text = "La finestra verrà rimossa. Usa il pulsante di riduzione per nasconderla soltanto.", confirm_yes = "Chiudi", confirm_no = "Annulla" })
+UI:AddLanguage("zh", "中文", { settings = "设置", general = "常规", language = "语言", language_desc = "窗口文字的语言", bar_labels = "图标下方显示名称", bar_labels_desc = "仅当面板位于顶部或底部时有效", timing = "标签面板时间", idle_slider = "无操作后折叠（秒）", idle_note = "面板位于顶部或底部时不适用。", idle_input = "输入数值（秒）", delay_slider = "启动后展开（秒）", delay_desc = "脚本启动后多少秒面板显示名称。下次启动时生效。", delay_input = "输入数值（秒）", confirm_title = "关闭窗口？", confirm_text = "窗口将被移除。如只想隐藏，请使用最小化按钮。", confirm_yes = "关闭", confirm_no = "取消" })
+UI:AddLanguage("ja", "日本語", { settings = "設定", general = "一般", language = "言語", language_desc = "ウィンドウの文字の言語", bar_labels = "アイコンの下に名前を表示", bar_labels_desc = "パネルが上または下にあるときのみ", timing = "タブパネルの時間", idle_slider = "操作がないとき折りたたむ（秒）", idle_note = "パネルが上または下にあるときは適用されません。", idle_input = "値を入力（秒）", delay_slider = "起動後に展開（秒）", delay_desc = "スクリプト起動から何秒後にパネルが名前を表示するか。次回の起動から有効です。", delay_input = "値を入力（秒）", confirm_title = "ウィンドウを閉じますか？", confirm_text = "ウィンドウは削除されます。隠すだけなら最小化ボタンを使ってください。", confirm_yes = "閉じる", confirm_no = "キャンセル" })
+
+local function settingsFileName(config)
+    local name = tostring(config.Title or "Window"):gsub("[^%w_%-]", "_")
+    return "Lumen_" .. name .. "_settings.json"
+end
+
+local function readSaved(path)
+    if type(readfile) ~= "function" then
+        return {}
+    end
+    local ok, data = pcall(function ()
+        if type(isfile) == "function" and not isfile(path) then
+            return nil
+        end
+        return HttpService:JSONDecode(readfile(path))
+    end)
+    return (ok and type(data) == "table") and data or {}
+end
+
+local createWindowBase9 = UI.CreateWindow
+function UI:CreateWindow(config)
+    config = config or {}
+    local settingsFile = settingsFileName(config)
+    local saved = readSaved(settingsFile)
+
+    local own = {}
+    for key, value in pairs(config) do
+        own[key] = value
+    end
+    if type(saved.BarLabels) == "boolean" then
+        own.BarLabels = saved.BarLabels
+    end
+    if tonumber(saved.RailCollapseAfter) then
+        own.RailCollapseAfter = tonumber(saved.RailCollapseAfter)
+    end
+    if tonumber(saved.RailExpandDelay) then
+        own.RailExpandDelay = tonumber(saved.RailExpandDelay)
+    end
+    local wanted = saved.Language or config.Language
+    if wanted and UI.Strings[tostring(wanted)] then
+        UI:SetLanguage(wanted, true)
+    end
+
+    local window = createWindowBase9(self, own)
+
+    local settingsOptions = type(config.Settings) == "table" and config.Settings or {}
+    local fullSettings = config.Settings ~= false
+    local hintSeconds = tonumber(config.SettingsHintSeconds) or 2.5
+
+    local saveToken = 0
+    local function saveSettings()
+        if type(writefile) ~= "function" then
+            return
+        end
+        saveToken = saveToken + 1
+        local token = saveToken
+        task.delay(0.6, function ()
+            if token ~= saveToken then
+                return
+            end
+            pcall(function ()
+                writefile(settingsFile, HttpService:JSONEncode({ Language = UI.Language, BarLabels = window.BarLabels == true, RailCollapseAfter = window.RailCollapseAfter, RailExpandDelay = window.RailExpandDelay}))
+            end)
+        end)
+    end
+
+    local footer = new("Frame", { BackgroundTransparency = 1, Size = UDim2.fromOffset(32, ROW), ZIndex = 5}, window.Main)
+    local button = new("TextButton", { Size = UDim2.fromScale(1, 1), AutoButtonColor = false, BackgroundTransparency = 1, Text = ""}, footer)
+    bindTheme(button, "BackgroundColor3", "Primary")
+    corner(button, 6)
+    local icon = UI.Icons:Create(button, tostring(config.SettingsIcon or "settings"), 16)
+    if not icon then
+        icon = new("TextLabel", { BackgroundTransparency = 1, Size = UDim2.fromOffset(16, 16), Font = Enum.Font.GothamBold, TextSize = 14, Text = "S"}, button)
+        bindTheme(icon, "TextColor3", "Text")
+    end
+
+    local tip = new("CanvasGroup", { Visible = false, GroupTransparency = 1, Size = UDim2.fromOffset(0, 0), AutomaticSize = Enum.AutomaticSize.XY, ZIndex = 30}, footer)
+    bindTheme(tip, "BackgroundColor3", "Popup")
+    corner(tip, 6)
+    stroke(tip, "Outline")
+    new("UIPadding", { PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8), PaddingTop = UDim.new(0, 5), PaddingBottom = UDim.new(0, 5)}, tip)
+    local tipText = new("TextLabel", { BackgroundTransparency = 1, Size = UDim2.fromOffset(0, 0), AutomaticSize = Enum.AutomaticSize.XY, Font = Enum.Font.GothamMedium, TextSize = 12, Text = ""}, tip)
+    bindTheme(tipText, "TextColor3", "Text")
+
+    local function styleFooter()
+        local dock = window.Dock
+        if dock == "Top" or dock == "Bottom" then
+            icon.AnchorPoint = Vector2.new(0.5, 0.5)
+            icon.Position = UDim2.fromScale(0.5, 0.5)
+            tip.AnchorPoint = Vector2.new(1, dock == "Top" and 0 or 1)
+            tip.Position = dock == "Top" and UDim2.new(1, 0, 1, 8) or UDim2.new(1, 0, 0, -8)
+        elseif dock == "Right" then
+            icon.AnchorPoint = Vector2.new(1, 0.5)
+            icon.Position = UDim2.new(1, -8, 0.5, 0)
+            tip.AnchorPoint = Vector2.new(1, 0.5)
+            tip.Position = UDim2.new(0, -12, 0.5, 0)
+        else
+            icon.AnchorPoint = Vector2.new(0, 0.5)
+            icon.Position = UDim2.new(0, 8, 0.5, 0)
+            tip.AnchorPoint = Vector2.new(0, 0.5)
+            tip.Position = UDim2.new(1, 12, 0.5, 0)
+        end
+    end
+
+    local hintToken = 0
+
+    local function hideHint()
+        hintToken = hintToken + 1
+        local token = hintToken
+        UI.Tween(tip, { GroupTransparency = 1}, 0.2)
+        task.delay(0.3, function ()
+            if token == hintToken then
+                tip.Visible = false
+            end
+        end)
+    end
+    local function showHint()
+        if window.Destroyed then
+            return
+        end
+        hintToken = hintToken + 1
+        local token = hintToken
+        tipText.Text = UI:T("settings")
+        tip.GroupTransparency = 1
+        tip.Visible = true
+        UI.Tween(tip, { GroupTransparency = 0}, 0.2)
+        task.delay(hintSeconds, function ()
+            if token == hintToken then
+                hideHint()
+            end
+        end)
+    end
+
+    window.Footer = footer
+    window.SettingsButton = button
+
+    local refs = {}
+    local languageDropdown, codeToName
+    local function pageTitle()
+        if window.PageTitle then
+            window.PageTitle.Text = tostring(window.GameTitle or "") .. "   |   " .. UI:T("settings")
+        end
+    end
+    local function localize()
+        for _, item in ipairs(refs) do
+            item.Element:SetTitle(UI:T(item.Title))
+            if item.Desc then
+                item.Element:SetDesc(UI:T(item.Desc))
+            end
+        end
+        if languageDropdown and codeToName[UI.Language] then
+            languageDropdown:Select(codeToName[UI.Language], true)
+        end
+        if window.SettingsOpen then
+            pageTitle()
+        end
+    end
+    local function add(element, title, desc)
+        refs[#refs + 1] = { Element = element, Title = title, Desc = desc}
+        return element
+    end
+    local function buildSettings()
+        if window.SettingsTab then
+            return
+        end
+        local tab = setmetatable({ Window = window, Title = "Settings"}, TabClass)
+        tab.Page = newPage(window)
+        tab.Container = tab.Page
+        window.SettingsTab = tab
+
+        add(tab:Section({ Title = UI:T("general")}), "general")
+        local names, nameToCode = {}, {}
+        codeToName = {}
+        for _, item in ipairs(UI.LanguageList) do
+            names[#names + 1] = item.Name
+            nameToCode[item.Name] = item.Code
+            codeToName[item.Code] = item.Name
+        end
+        languageDropdown = add(tab:Dropdown({ Title = UI:T("language"), Desc = UI:T("language_desc"), Values = names, Value = codeToName[UI.Language], Callback = function (name)
+            if name and nameToCode[name] then
+                UI:SetLanguage(nameToCode[name])
+            end
+        end }), "language", "language_desc")
+
+        if fullSettings and settingsOptions.BarLabels ~= false then
+            add(tab:Toggle({ Title = UI:T("bar_labels"), Desc = UI:T("bar_labels_desc"), Value = window.BarLabels == true, Callback = function (value)
+                window.BarLabels = value
+                window:SetDock(window.Dock, true)
+                saveSettings()
+            end }), "bar_labels", "bar_labels_desc")
+        end
+
+        if fullSettings and settingsOptions.Timing ~= false then
+            add(tab:Section({ Title = UI:T("timing")}), "timing")
+
+            local function timeSetting(field, sliderKey, descKey, sliderMin, sliderMax, typedMax)
+                add(tab:Slider({ Title = UI:T(sliderKey), Desc = UI:T(descKey), Step = 1, Live = true, TypedMax = typedMax, Value = { Min = sliderMin, Max = sliderMax, Default = math.clamp(window[field], 0, typedMax)}, Callback = function (number)
+                    window[field] = number
+                    saveSettings()
+                end }), sliderKey, descKey)
+            end
+            timeSetting("RailCollapseAfter", "idle_slider", "idle_note", 3, 120, 3600)
+            timeSetting("RailExpandDelay", "delay_slider", "delay_desc", 0, 30, 600)
+        end
+    end
+
+    local function setButtonActive(active)
+        UI.Tween(button, { BackgroundTransparency = active and 0.8 or 1}, 0.18)
+    end
+    local function toggleSettings()
+        window:PanelActivity(true)
+        hideHint()
+        if window.SettingsOpen then
+            if window.Selected then
+                window:SelectTab(window.Selected)
+            end
+            return
+        end
+        buildSettings()
+        window.SettingsOpen = true
+        for _, other in ipairs(window.Tabs) do
+            other.Page.Visible = false
+            other:SetActive(false)
+        end
+        local page = window.SettingsTab.Page
+        page.Position = UDim2.fromOffset(0, 14)
+        page.Visible = true
+        UI.Tween(page, { Position = UDim2.new()}, 0.22)
+        setButtonActive(true)
+        pageTitle()
+    end
+    button.MouseButton1Click:Connect(toggleSettings)
+    button.MouseEnter:Connect(function ()
+        if not window.SettingsOpen then
+            UI.Tween(button, { BackgroundTransparency = 0.9}, 0.12)
+        end
+        showHint()
+    end)
+    button.MouseLeave:Connect(function ()
+        if not window.SettingsOpen then
+            UI.Tween(button, { BackgroundTransparency = 1}, 0.12)
+        end
+        hideHint()
+    end)
+
+    local baseSelectTab = window.SelectTab
+    function window:SelectTab(tab)
+        if window.SettingsOpen then
+            window.SettingsOpen = false
+            if window.SettingsTab then
+                window.SettingsTab.Page.Visible = false
+            end
+            setButtonActive(false)
+        end
+        baseSelectTab(self, tab)
+    end
+
+    local baseSetRail = window.SetRail
+    function window:SetRail(open)
+        local wasOpen = window.RailOpen
+        baseSetRail(self, open)
+        if window.RailOpen and not wasOpen and not window.HintShown then
+            window.HintShown = true
+            task.delay(0.5, showHint)
+        end
+    end
+    local baseSetDock = window.SetDock
+    function window:SetDock(dock, silent)
+        baseSetDock(self, dock, silent)
+        styleFooter()
+        if window.DockReady and window.RailOpen then
+            task.delay(0.5, showHint)
+        end
+    end
+
+    UI.LanguageListeners[#UI.LanguageListeners + 1] = function ()
+        if window.Destroyed then
+            return false
+        end
+
+        for _, tab in ipairs(window.Tabs) do
+            tab:Retitle()
+        end
+        for _, element in ipairs(window.Localized or {}) do
+            element:Relocalize()
+        end
+        localize()
+        if not window.SettingsOpen and window.Selected and window.PageTitle then
+            local tab = window.Selected
+            window.PageTitle.Text = tostring(window.GameTitle or "") .. "   |   " .. (tab.Parent and (tostring(tab.Parent.Title) .. "  /  ") or "") .. tostring(tab.Title or "")
+        end
+        window:Layout(true)
+        saveSettings()
+    end
+
+    styleFooter()
+    window:Layout(false)
+    return window
 end
 
 return UI
