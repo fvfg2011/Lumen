@@ -349,16 +349,11 @@ function UI:CreateWindow(config)
     local accentLine = new("Frame", { BorderSizePixel = 0, AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 1), ZIndex = 2}, titleBar)
     bindTheme(accentLine, "BackgroundColor3", "Primary")
     new("UIGradient", { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0.2), NumberSequenceKeypoint.new(1, 1)})}, accentLine)
-    local closeButton = new("TextButton", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, 0), Size = UDim2.fromOffset(26, 26), Font = Enum.Font.GothamBold, TextSize = 14, Text = "-", AutoButtonColor = true}, titleBar)
-    bindTheme(closeButton, "BackgroundColor3", "Element")
+
+    local closeButton = new("TextButton", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, 0), Size = UDim2.fromOffset(26, 26), Font = Enum.Font.GothamBold, TextSize = 14, Text = "-", AutoButtonColor = false, BackgroundTransparency = 1}, titleBar)
     bindTheme(closeButton, "TextColor3", "Text")
-    corner(closeButton, 8)
-    stroke(closeButton, "Outline")
-    local killButton = new("TextButton", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -42, 0.5, 0), Size = UDim2.fromOffset(26, 26), Font = Enum.Font.GothamBold, TextSize = 13, Text = "×", AutoButtonColor = true}, titleBar)
-    bindTheme(killButton, "BackgroundColor3", "Element")
+    local killButton = new("TextButton", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -42, 0.5, 0), Size = UDim2.fromOffset(26, 26), Font = Enum.Font.GothamBold, TextSize = 13, Text = "×", AutoButtonColor = false, BackgroundTransparency = 1}, titleBar)
     bindTheme(killButton, "TextColor3", "Text")
-    corner(killButton, 8)
-    stroke(killButton, "Outline")
 
     for _, info in ipairs({ { closeButton, config.MinimizeIcon, "solar:minimize-square-3-linear", "minus", "-"}, { killButton, config.CloseIcon, "solar:close-square-linear", "x", "×"} }) do
         local button, glyph = info[1], info[5]
@@ -373,6 +368,22 @@ function UI:CreateWindow(config)
             button.Text = ""
             icon.AnchorPoint = Vector2.new(0.5, 0.5)
             icon.Position = UDim2.fromScale(0.5, 0.5)
+            if icon:IsA("TextLabel") then
+                bindTheme(icon, "TextColor3", "SubText")
+            else
+                bindTheme(icon, "ImageColor3", "SubText")
+            end
+            button.MouseEnter:Connect(function ()
+                UI.Tween(icon, icon:IsA("TextLabel") and { TextTransparency = 0} or { ImageTransparency = 0}, 0.12)
+            end)
+            button.MouseLeave:Connect(function ()
+                UI.Tween(icon, icon:IsA("TextLabel") and { TextTransparency = 0.3} or { ImageTransparency = 0.3}, 0.12)
+            end)
+            if icon:IsA("TextLabel") then
+                icon.TextTransparency = 0.3
+            else
+                icon.ImageTransparency = 0.3
+            end
         else
             button.Text = glyph
         end
@@ -692,7 +703,9 @@ local function barMetrics(window)
     local labels = window.BarLabels == true
 
     local selected = window.Selected
-    local hasOpenSubs = labels and selected ~= nil and ((selected.Children ~= nil) or (selected.Parent ~= nil and selected.Parent.Children ~= nil))
+
+    local group = selected and (selected.Children and selected or selected.Parent) or nil
+    local hasOpenSubs = labels and group ~= nil and group.Expanded == true
     local outer = labels and LABEL_BAND or 0
     local inner = hasOpenSubs and LABEL_BAND or 0
     local m = { Height = ROW + outer + inner }
