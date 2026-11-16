@@ -690,15 +690,11 @@ end
 local LABEL_BAND = 16
 local function barMetrics(window)
     local labels = window.BarLabels == true
-    local hasSubs = false
-    for _, tab in ipairs(window.Tabs or {}) do
-        if tab.Children then
-            hasSubs = true
-            break
-        end
-    end
+
+    local selected = window.Selected
+    local hasOpenSubs = labels and selected ~= nil and ((selected.Children ~= nil) or (selected.Parent ~= nil and selected.Parent.Children ~= nil))
     local outer = labels and LABEL_BAND or 0
-    local inner = (labels and hasSubs) and LABEL_BAND or 0
+    local inner = hasOpenSubs and LABEL_BAND or 0
     local m = { Height = ROW + outer + inner }
     if window.Dock == "Top" then
         m.IconY, m.TabLabelY, m.SubLabelY = outer, 0, outer + ROW + 2
@@ -1043,12 +1039,15 @@ function UI:CreateWindow(config)
             end
         elseif dock == "Top" then
             local height = window.BarH
-            apply(sidebar, { Position = UDim2.fromOffset(8, 46), Size = UDim2.new(1, -16, 0, height)})
-            apply(content, { Position = UDim2.fromOffset(8, 46 + height + 6), Size = UDim2.new(1, -16, 1, -(46 + height + 6 + 8))})
+
+            sidebar.Size = UDim2.new(1, -16, 0, height)
+            apply(sidebar, { Position = UDim2.fromOffset(8, 46)})
+            content.Position, content.Size = UDim2.fromOffset(8, 46 + height + 6), UDim2.new(1, -16, 1, -(46 + height + 6 + 8))
         else
             local height = window.BarH
-            apply(sidebar, { Position = UDim2.new(0, 8, 1, -(8 + height)), Size = UDim2.new(1, -16, 0, height)})
-            apply(content, { Position = UDim2.fromOffset(8, 44), Size = UDim2.new(1, -16, 1, -(44 + height + 6 + 8))})
+            sidebar.Size = UDim2.new(1, -16, 0, height)
+            apply(sidebar, { Position = UDim2.new(0, 8, 1, -(8 + height))})
+            content.Position, content.Size = UDim2.fromOffset(8, 44), UDim2.new(1, -16, 1, -(44 + height + 6 + 8))
         end
 
         local footer, pad = window.Footer, window.SidebarPad
