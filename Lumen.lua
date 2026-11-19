@@ -1079,13 +1079,11 @@ function UI:CreateWindow(config)
         elseif dock == "Top" then
             local height = window.BarH
 
-            sidebar.Size = UDim2.new(1, -16, 0, height)
-            apply(sidebar, { Position = UDim2.fromOffset(8, 46)})
+            apply(sidebar, { Position = UDim2.fromOffset(8, 46), Size = UDim2.new(1, -16, 0, height)})
             content.Position, content.Size = UDim2.fromOffset(8, 46 + height + 6), UDim2.new(1, -16, 1, -(46 + height + 6 + 8))
         else
             local height = window.BarH
-            sidebar.Size = UDim2.new(1, -16, 0, height)
-            apply(sidebar, { Position = UDim2.new(0, 8, 1, -8)})
+            apply(sidebar, { Position = UDim2.new(0, 8, 1, -8), Size = UDim2.new(1, -16, 0, height)})
             content.Position, content.Size = UDim2.fromOffset(8, 44), UDim2.new(1, -16, 1, -(44 + height + 6 + 8))
         end
 
@@ -1135,6 +1133,10 @@ function UI:CreateWindow(config)
         if not key then
             return
         end
+        if window.DockReady and window.DockSwitchUntil and os.clock() < window.DockSwitchUntil then
+            return
+        end
+        window.DockSwitchUntil = os.clock() + 0.46
         window.Dock = key
         local sidebar = window.SideScroll
         if isBar(window) then
