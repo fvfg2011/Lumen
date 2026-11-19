@@ -1056,7 +1056,7 @@ function UI:CreateWindow(config)
                 end
             end
         end
-        sidebar.AnchorPoint = Vector2.new(0, 0)
+        sidebar.AnchorPoint = window.Dock == "Bottom" and Vector2.new(0, 1) or Vector2.new(0, 0)
         if isBar(window) then
             local m = barMetrics(window)
             window.BarH, window.BarIconY = m.Height + 12, m.IconY
@@ -1084,7 +1084,8 @@ function UI:CreateWindow(config)
             content.Position, content.Size = UDim2.fromOffset(8, 46 + height + 6), UDim2.new(1, -16, 1, -(46 + height + 6 + 8))
         else
             local height = window.BarH
-            apply(sidebar, { Position = UDim2.new(0, 8, 1, -(8 + height)), Size = UDim2.new(1, -16, 0, height)})
+            sidebar.Size = UDim2.new(1, -16, 0, height)
+            apply(sidebar, { Position = UDim2.new(0, 8, 1, -8)})
             content.Position, content.Size = UDim2.fromOffset(8, 44), UDim2.new(1, -16, 1, -(44 + height + 6 + 8))
         end
 
