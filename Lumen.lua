@@ -1080,11 +1080,11 @@ function UI:CreateWindow(config)
             local height = window.BarH
 
             apply(sidebar, { Position = UDim2.fromOffset(8, 46), Size = UDim2.new(1, -16, 0, height)})
-            content.Position, content.Size = UDim2.fromOffset(8, 46 + height + 6), UDim2.new(1, -16, 1, -(46 + height + 6 + 8))
+            apply(content, { Position = UDim2.fromOffset(8, 46 + height + 6), Size = UDim2.new(1, -16, 1, -(46 + height + 6 + 8))})
         else
             local height = window.BarH
             apply(sidebar, { Position = UDim2.new(0, 8, 1, -8), Size = UDim2.new(1, -16, 0, height)})
-            content.Position, content.Size = UDim2.fromOffset(8, 44), UDim2.new(1, -16, 1, -(44 + height + 6 + 8))
+            apply(content, { Position = UDim2.fromOffset(8, 44), Size = UDim2.new(1, -16, 1, -(44 + height + 6 + 8))})
         end
 
         local footer, pad = window.Footer, window.SidebarPad
