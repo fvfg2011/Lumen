@@ -5,6 +5,40 @@ local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
 local RunService = game:GetService("RunService")
+local HttpService = game:GetService("HttpService")
+
+local LumenDataFolder = "LumenUI"
+local function lumenSettingsPath(config)
+    local name = tostring((config and config.Title) or "Window"):gsub("[^%w_%-]", "_")
+    return LumenDataFolder .. "/" .. name .. ".json"
+end
+local function lumenReadSettings(path)
+    if type(readfile) ~= "function" then
+        return {}
+    end
+    local ok, data = pcall(function ()
+        if type(isfile) == "function" and not isfile(path) then
+            return nil
+        end
+        return HttpService:JSONDecode(readfile(path))
+    end)
+    return (ok and type(data) == "table") and data or {}
+end
+local function lumenSaveSettings(path, patch)
+    if type(writefile) ~= "function" then
+        return
+    end
+    pcall(function ()
+        if type(isfolder) == "function" and type(makefolder) == "function" and not isfolder(LumenDataFolder) then
+            makefolder(LumenDataFolder)
+        end
+        local current = lumenReadSettings(path)
+        for key, value in pairs(patch) do
+            current[key] = value
+        end
+        writefile(path, HttpService:JSONEncode(current))
+    end)
+end
 
 local function addTheme(name, colors, alpha, strokeAlpha, gloss)
     UI.Themes[name] = colors
@@ -349,22 +383,17 @@ function UI:CreateWindow(config)
     local accentLine = new("Frame", { BorderSizePixel = 0, AnchorPoint = Vector2.new(0, 1), Position = UDim2.fromScale(0, 1), Size = UDim2.new(1, 0, 0, 1), ZIndex = 2}, titleBar)
     bindTheme(accentLine, "BackgroundColor3", "Primary")
     new("UIGradient", { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0.2), NumberSequenceKeypoint.new(1, 1)})}, accentLine)
-    local closeButton = new("TextButton", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, 0), Size = UDim2.fromOffset(26, 26), Font = Enum.Font.GothamBold, TextSize = 14, Text = "-", AutoButtonColor = true}, titleBar)
-    bindTheme(closeButton, "BackgroundColor3", "Element")
+
+    local closeButton = new("TextButton", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -10, 0.5, 0), Size = UDim2.fromOffset(26, 26), Font = Enum.Font.GothamBold, TextSize = 14, Text = "-", AutoButtonColor = false, BackgroundTransparency = 1}, titleBar)
     bindTheme(closeButton, "TextColor3", "Text")
-    corner(closeButton, 8)
-    stroke(closeButton, "Outline")
-    local killButton = new("TextButton", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -42, 0.5, 0), Size = UDim2.fromOffset(26, 26), Font = Enum.Font.GothamBold, TextSize = 13, Text = "×", AutoButtonColor = true}, titleBar)
-    bindTheme(killButton, "BackgroundColor3", "Element")
+    local killButton = new("TextButton", { AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -42, 0.5, 0), Size = UDim2.fromOffset(26, 26), Font = Enum.Font.GothamBold, TextSize = 13, Text = "×", AutoButtonColor = false, BackgroundTransparency = 1}, titleBar)
     bindTheme(killButton, "TextColor3", "Text")
-    corner(killButton, 8)
-    stroke(killButton, "Outline")
 
     for _, info in ipairs({ { closeButton, config.MinimizeIcon, "solar:minimize-square-3-linear", "minus", "-"}, { killButton, config.CloseIcon, "solar:close-square-linear", "x", "×"} }) do
         local button, glyph = info[1], info[5]
         local icon
         for _, iconName in ipairs(info[2] and { tostring(info[2]) } or { info[3], info[4] }) do
-            icon = UI.Icons and UI.Icons:Create(button, iconName, 14)
+            icon = UI.Icons and UI.Icons:Create(button, iconName, 20)
             if icon then
                 break
             end
@@ -373,6 +402,22 @@ function UI:CreateWindow(config)
             button.Text = ""
             icon.AnchorPoint = Vector2.new(0.5, 0.5)
             icon.Position = UDim2.fromScale(0.5, 0.5)
+            if icon:IsA("TextLabel") then
+                bindTheme(icon, "TextColor3", "SubText")
+            else
+                bindTheme(icon, "ImageColor3", "SubText")
+            end
+            button.MouseEnter:Connect(function ()
+                UI.Tween(icon, icon:IsA("TextLabel") and { TextTransparency = 0} or { ImageTransparency = 0}, 0.12)
+            end)
+            button.MouseLeave:Connect(function ()
+                UI.Tween(icon, icon:IsA("TextLabel") and { TextTransparency = 0.3} or { ImageTransparency = 0.3}, 0.12)
+            end)
+            if icon:IsA("TextLabel") then
+                icon.TextTransparency = 0.3
+            else
+                icon.ImageTransparency = 0.3
+            end
         else
             button.Text = glyph
         end
@@ -692,7 +737,9 @@ local function barMetrics(window)
     local labels = window.BarLabels == true
 
     local selected = window.Selected
-    local hasOpenSubs = labels and selected ~= nil and ((selected.Children ~= nil) or (selected.Parent ~= nil and selected.Parent.Children ~= nil))
+
+    local group = selected and (selected.Children and selected or selected.Parent) or nil
+    local hasOpenSubs = labels and group ~= nil and group.Expanded == true
     local outer = labels and LABEL_BAND or 0
     local inner = hasOpenSubs and LABEL_BAND or 0
     local m = { Height = ROW + outer + inner }
@@ -984,20 +1031,12 @@ function UI:CreateWindow(config)
     config = config or {}
     window.BarLabels = config.BarLabels == true
 
-    local dockFile
-    if config.SaveDock ~= false and type(writefile) == "function" and type(readfile) == "function" then
-        dockFile = tostring(config.DockFile or ("Lumen_" .. (tostring(config.Title or "Window"):gsub("[^%w_%-]", "_")) .. "_dock.txt"))
-    end
+    local settingsPath = config.SaveDock ~= false and lumenSettingsPath(config) or nil
     local savedDock
-    if dockFile then
-        local ok, text = pcall(function ()
-            if type(isfile) == "function" and not isfile(dockFile) then
-                return nil
-            end
-            return readfile(dockFile)
-        end)
-        if ok and type(text) == "string" then
-            savedDock = text:gsub("%s", "")
+    if settingsPath then
+        local saved = lumenReadSettings(settingsPath)
+        if type(saved.Dock) == "string" and saved.Dock ~= "" then
+            savedDock = saved.Dock
         end
     end
     window.RailOpen = false
@@ -1139,8 +1178,8 @@ function UI:CreateWindow(config)
             bindTheme(entry.Strip, "BackgroundColor3", name == key and "Primary" or "SubText", true)
             bindTheme(entry.Stroke, "Color", name == key and "Primary" or "SubText", true)
         end
-        if window.DockReady and dockFile then
-            pcall(writefile, dockFile, key)
+        if window.DockReady and settingsPath then
+            lumenSaveSettings(settingsPath, { Dock = key })
         end
         if not silent and type(config.DockChanged) == "function" then
             UI.RunCallback(config.DockChanged, key)
@@ -2392,8 +2431,6 @@ function UI.TabClass:Keybind(config)
     return element
 end
 
-local HttpService = game:GetService("HttpService")
-
 UI.Strings = {}
 UI.LanguageList = {}
 UI.LanguageListeners = {}
@@ -2469,23 +2506,8 @@ UI:AddLanguage("it", "Italiano", { settings = "Impostazioni", general = "General
 UI:AddLanguage("zh", "中文", { settings = "设置", general = "常规", language = "语言", language_desc = "窗口文字的语言", bar_labels = "图标下方显示名称", bar_labels_desc = "仅当面板位于顶部或底部时有效", timing = "标签面板时间", idle_slider = "无操作后折叠（秒）", idle_note = "面板位于顶部或底部时不适用。", idle_input = "输入数值（秒）", delay_slider = "启动后展开（秒）", delay_desc = "脚本启动后多少秒面板显示名称。下次启动时生效。", delay_input = "输入数值（秒）", confirm_title = "关闭窗口？", confirm_text = "窗口将被移除。如只想隐藏，请使用最小化按钮。", confirm_yes = "关闭", confirm_no = "取消" })
 UI:AddLanguage("ja", "日本語", { settings = "設定", general = "一般", language = "言語", language_desc = "ウィンドウの文字の言語", bar_labels = "アイコンの下に名前を表示", bar_labels_desc = "パネルが上または下にあるときのみ", timing = "タブパネルの時間", idle_slider = "操作がないとき折りたたむ（秒）", idle_note = "パネルが上または下にあるときは適用されません。", idle_input = "値を入力（秒）", delay_slider = "起動後に展開（秒）", delay_desc = "スクリプト起動から何秒後にパネルが名前を表示するか。次回の起動から有効です。", delay_input = "値を入力（秒）", confirm_title = "ウィンドウを閉じますか？", confirm_text = "ウィンドウは削除されます。隠すだけなら最小化ボタンを使ってください。", confirm_yes = "閉じる", confirm_no = "キャンセル" })
 
-local function settingsFileName(config)
-    local name = tostring(config.Title or "Window"):gsub("[^%w_%-]", "_")
-    return "Lumen_" .. name .. "_settings.json"
-end
-
-local function readSaved(path)
-    if type(readfile) ~= "function" then
-        return {}
-    end
-    local ok, data = pcall(function ()
-        if type(isfile) == "function" and not isfile(path) then
-            return nil
-        end
-        return HttpService:JSONDecode(readfile(path))
-    end)
-    return (ok and type(data) == "table") and data or {}
-end
+local settingsFileName = lumenSettingsPath
+local readSaved = lumenReadSettings
 
 local createWindowBase9 = UI.CreateWindow
 function UI:CreateWindow(config)
@@ -2528,9 +2550,7 @@ function UI:CreateWindow(config)
             if token ~= saveToken then
                 return
             end
-            pcall(function ()
-                writefile(settingsFile, HttpService:JSONEncode({ Language = UI.Language, BarLabels = window.BarLabels == true, RailCollapseAfter = window.RailCollapseAfter, RailExpandDelay = window.RailExpandDelay}))
-            end)
+            lumenSaveSettings(settingsFile, { Language = UI.Language, BarLabels = window.BarLabels == true, RailCollapseAfter = window.RailCollapseAfter, RailExpandDelay = window.RailExpandDelay})
         end)
     end
 
