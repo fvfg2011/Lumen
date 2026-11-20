@@ -743,11 +743,14 @@ local function barMetrics(window)
     local outer = labels and LABEL_BAND or 0
     local inner = hasOpenSubs and LABEL_BAND or 0
     local m = { Height = ROW + outer + inner }
-    if window.Dock == "Top" then
-        m.IconY, m.TabLabelY, m.SubLabelY = outer, 0, outer + ROW + 2
-    else
-        m.IconY, m.TabLabelY, m.SubLabelY = inner, inner + ROW + 2, 0
-    end
+    -- Иконка и собственный лейбл таба всегда меряются от своего БЛИЖНЕГО
+    -- (закреплённого) края бара — не зависят от hasOpenSubs/inner, иначе при
+    -- открытии/закрытии подвкладок они будут мгновенно прыгать, пока сам бар
+    -- плавно растёт. Полоса подвкладок (SubLabelY) наоборот всегда лежит в
+    -- "новом" месте — там, где бар растёт, и это нормально дёргается вместе с
+    -- появлением самой полосы.
+    m.IconY, m.TabLabelY, m.SubLabelY = outer, 0, outer + ROW + 2
+    m.FromFarEdge = window.Dock == "Bottom"
     return m
 end
 
@@ -849,8 +852,13 @@ local function styleTab(tab, animate)
                 tab.ChildrenList.FillDirection = Enum.FillDirection.Horizontal
             end
         end
-        button.AnchorPoint = Vector2.new(0.5, 0)
-        button.Position = UDim2.new(0.5, 0, 0, m.IconY)
+        -- На Bottom бар растёт вверх, а закреплён его НИЖНИЙ край, поэтому иконку
+        -- и собственный лейбл меряем от низа (FromFarEdge), чтобы при открытии/
+        -- закрытии подвкладок (которое меняет только высоту "дальней" полосы)
+        -- они не прыгали — расстояние до своего (нижнего) края всегда одно и то же.
+        local far = m.FromFarEdge
+        button.AnchorPoint = Vector2.new(0.5, far and 1 or 0)
+        button.Position = far and UDim2.new(0.5, 0, 1, -m.IconY) or UDim2.new(0.5, 0, 0, m.IconY)
         button.Size = UDim2.fromOffset(sub and BAR_CELL - 2 or 32, ROW)
         icon.AnchorPoint = Vector2.new(0.5, 0.5)
         icon.Position = UDim2.fromScale(0.5, 0.5)
@@ -858,8 +866,9 @@ local function styleTab(tab, animate)
         pill.Position = UDim2.new(0.5, 0, 1, -1)
         if labels then
             label.Parent = tab.Row
-            label.AnchorPoint = Vector2.new(0, 0)
-            label.Position = UDim2.fromOffset(0, sub and m.SubLabelY or m.TabLabelY)
+            local labelY = sub and m.SubLabelY or m.TabLabelY
+            label.AnchorPoint = Vector2.new(0, far and 1 or 0)
+            label.Position = far and UDim2.new(0, 0, 1, -labelY) or UDim2.fromOffset(0, labelY)
             label.Size = UDim2.new(1, 0, 0, 14)
             label.TextSize = 11
             label.TextXAlignment = Enum.TextXAlignment.Center
