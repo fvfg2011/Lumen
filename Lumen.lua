@@ -742,15 +742,19 @@ local function barMetrics(window)
     local hasOpenSubs = labels and group ~= nil and group.Expanded == true
     local outer = labels and LABEL_BAND or 0
     local inner = hasOpenSubs and LABEL_BAND or 0
-    local m = { Height = ROW + outer + inner }
-    -- Иконка и собственный лейбл таба всегда меряются от своего БЛИЖНЕГО
-    -- (закреплённого) края бара — не зависят от hasOpenSubs/inner, иначе при
-    -- открытии/закрытии подвкладок они будут мгновенно прыгать, пока сам бар
-    -- плавно растёт. Полоса подвкладок (SubLabelY) наоборот всегда лежит в
-    -- "новом" месте — там, где бар растёт, и это нормально дёргается вместе с
-    -- появлением самой полосы.
-    m.IconY, m.TabLabelY, m.SubLabelY = outer, 0, outer + ROW + 2
-    m.FromFarEdge = window.Dock == "Bottom"
+    local height = ROW + outer + inner
+    local m = { Height = height }
+    if window.Dock == "Top" then
+        m.IconY, m.TabLabelY, m.SubLabelY = outer, 0, outer + ROW + 2
+    else
+        -- Bottom — точное зеркало формул Top (от верхнего края бокса, через
+        -- отражение oldTop -> height - oldTop - elementHeight), а не независимый
+        -- расчёт "от нижнего края" через Scale: Scale, завязанный на ЖИВОЙ (ещё
+        -- анимирующийся) размер родителя, у Roblox визуально подёргивается.
+        -- Здесь всё — чистый Offset, и позиция тоже анимируется (см. styleTab),
+        -- синхронно с твином высоты бара.
+        m.IconY, m.TabLabelY, m.SubLabelY = height - outer - ROW, height - 14, height - outer - ROW - 16
+    end
     return m
 end
 
@@ -815,7 +819,7 @@ local function railWidth(window)
     return math.max(112, widest + 12)
 end
 
-local function styleTab(tab, animate)
+local function styleTab(tab, animate, seconds)
     local window = tab.Window
     local dock = window.Dock
     local bar = isBar(window)
@@ -826,6 +830,19 @@ local function styleTab(tab, animate)
     local function set(instance, props)
         if animate and not bar then
             UI.Tween(instance, props, 0.25, Enum.EasingStyle.Quad)
+        else
+            for key, value in pairs(props) do
+                instance[key] = value
+            end
+        end
+    end
+    -- В bar-режиме иконка/лейбл теперь тоже анимируются (той же длительностью,
+    -- что и рост самого бара в Layout), но ТОЛЬКО через Offset — Scale здесь не
+    -- используем принципиально (Scale относительно ещё анимирующегося родителя
+    -- у Roblox визуально дёргается).
+    local function barSet(instance, props)
+        if animate then
+            UI.Tween(instance, props, seconds or 0.25, seconds and Enum.EasingStyle.Quart or Enum.EasingStyle.Quad)
         else
             for key, value in pairs(props) do
                 instance[key] = value
@@ -852,13 +869,8 @@ local function styleTab(tab, animate)
                 tab.ChildrenList.FillDirection = Enum.FillDirection.Horizontal
             end
         end
-        -- На Bottom бар растёт вверх, а закреплён его НИЖНИЙ край, поэтому иконку
-        -- и собственный лейбл меряем от низа (FromFarEdge), чтобы при открытии/
-        -- закрытии подвкладок (которое меняет только высоту "дальней" полосы)
-        -- они не прыгали — расстояние до своего (нижнего) края всегда одно и то же.
-        local far = m.FromFarEdge
-        button.AnchorPoint = Vector2.new(0.5, far and 1 or 0)
-        button.Position = far and UDim2.new(0.5, 0, 1, -m.IconY) or UDim2.new(0.5, 0, 0, m.IconY)
+        button.AnchorPoint = Vector2.new(0.5, 0)
+        barSet(button, { Position = UDim2.new(0.5, 0, 0, m.IconY)})
         button.Size = UDim2.fromOffset(sub and BAR_CELL - 2 or 32, ROW)
         icon.AnchorPoint = Vector2.new(0.5, 0.5)
         icon.Position = UDim2.fromScale(0.5, 0.5)
@@ -867,8 +879,8 @@ local function styleTab(tab, animate)
         if labels then
             label.Parent = tab.Row
             local labelY = sub and m.SubLabelY or m.TabLabelY
-            label.AnchorPoint = Vector2.new(0, far and 1 or 0)
-            label.Position = far and UDim2.new(0, 0, 1, -labelY) or UDim2.fromOffset(0, labelY)
+            label.AnchorPoint = Vector2.new(0, 0)
+            barSet(label, { Position = UDim2.fromOffset(0, labelY)})
             label.Size = UDim2.new(1, 0, 0, 14)
             label.TextSize = 11
             label.TextXAlignment = Enum.TextXAlignment.Center
