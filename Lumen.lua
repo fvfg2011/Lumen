@@ -80,7 +80,7 @@ accentTheme("Ocean", rgb(6, 182, 212))
 accentTheme("Sunset", rgb(251, 113, 60))
 
 addTheme("Glass", {
-    Background = rgb(255, 255, 255), Panel = rgb(255, 255, 255), Element = rgb(255, 255, 255), Popup = rgb(250, 252, 255),
+    Background = rgb(255, 255, 255), Panel = rgb(255, 255, 205), Element = rgb(255, 255, 255), Popup = rgb(250, 252, 255),
     Text = rgb(8, 10, 16), SubText = rgb(38, 42, 56), Primary = rgb(0, 92, 205), Outline = rgb(18, 22, 34),
 }, { Background = 0.5, Panel = 0.62, Element = 0.45, Popup = 0.1 }, 0.4, 0.5)
 
