@@ -1056,7 +1056,23 @@ function UI:CreateWindow(config)
                 end
             end
         end
-        sidebar.AnchorPoint = Vector2.new(0, 0)
+        -- Каждый док крепится к своей "рамке" одной константой: Left/Top растут
+        -- от верхнего/левого края, Right/Bottom — от правого/нижнего (через AnchorPoint).
+        -- Если якорь меняется (сменили док), сперва мгновенно компенсируем Position,
+        -- чтобы рамка не "прыгнула" на кадр, пока сайдбар ещё не доехал на новое место.
+        local dock = window.Dock
+        local newAnchor = (dock == "Right" and Vector2.new(1, 0))
+            or (dock == "Bottom" and Vector2.new(0, 1))
+            or Vector2.new(0, 0)
+        if sidebar.AnchorPoint ~= newAnchor then
+            local parent = sidebar.Parent
+            if parent then
+                local topLeft = sidebar.AbsolutePosition - parent.AbsolutePosition
+                local compensated = topLeft + newAnchor * sidebar.AbsoluteSize
+                sidebar.Position = UDim2.fromOffset(compensated.X, compensated.Y)
+            end
+            sidebar.AnchorPoint = newAnchor
+        end
         if isBar(window) then
             local m = barMetrics(window)
             window.BarH, window.BarIconY = m.Height + 12, m.IconY
@@ -1065,7 +1081,6 @@ function UI:CreateWindow(config)
                 applyHolder(tab, animate)
             end
         end
-        local dock = window.Dock
         if dock == "Left" or dock == "Right" then
             local width = window.RailOpen and railWidth(window) or RAIL_MIN
             window.RailWidth = width
@@ -1073,7 +1088,7 @@ function UI:CreateWindow(config)
                 apply(sidebar, { Position = UDim2.fromOffset(8, 46), Size = UDim2.new(0, width, 1, -54)})
                 apply(content, { Position = UDim2.fromOffset(width + 16, 44), Size = UDim2.new(1, -(width + 24), 1, -52)})
             else
-                apply(sidebar, { Position = UDim2.new(1, -(8 + width), 0, 46), Size = UDim2.new(0, width, 1, -54)})
+                apply(sidebar, { Position = UDim2.new(1, -8, 0, 46), Size = UDim2.new(0, width, 1, -54)})
                 apply(content, { Position = UDim2.fromOffset(8, 44), Size = UDim2.new(1, -(width + 24), 1, -52)})
             end
         elseif dock == "Top" then
@@ -1081,9 +1096,9 @@ function UI:CreateWindow(config)
 
             apply(sidebar, { Position = UDim2.fromOffset(8, 46), Size = UDim2.new(1, -16, 0, height)})
             apply(content, { Position = UDim2.fromOffset(8, 46 + height + 6), Size = UDim2.new(1, -16, 1, -(46 + height + 6 + 8))})
-        else
+        elseif dock == "Bottom" then
             local height = window.BarH
-            apply(sidebar, { Position = UDim2.new(0, 8, 1, -(8 + height)), Size = UDim2.new(1, -16, 0, height)})
+            apply(sidebar, { Position = UDim2.new(0, 8, 1, -8), Size = UDim2.new(1, -16, 0, height)})
             apply(content, { Position = UDim2.fromOffset(8, 44), Size = UDim2.new(1, -16, 1, -(44 + height + 6 + 8))})
         end
 
@@ -1093,9 +1108,12 @@ function UI:CreateWindow(config)
                 local width = window.RailWidth
                 apply(window.SideScroll, { Size = UDim2.new(1, 0, 1, -(ROW + 12))})
                 apply(footer, { Size = UDim2.fromOffset(width - 12, ROW), Position = dock == "Left" and UDim2.new(0, 14, 1, -(14 + ROW)) or UDim2.new(1, -(8 + width - 6), 1, -(14 + ROW))})
-            else
+            elseif dock == "Top" then
                 apply(window.SideScroll, { Size = UDim2.new(1, -46, 1, 0)})
-                apply(footer, { Size = UDim2.fromOffset(34, ROW), Position = dock == "Top" and UDim2.new(1, -(14 + 34), 0, 52 + (window.BarIconY or 0)) or UDim2.new(1, -(14 + 34), 1, -(2 + window.BarH) + (window.BarIconY or 0))})
+                apply(footer, { Size = UDim2.fromOffset(34, ROW), Position = UDim2.new(1, -(14 + 34), 0, 52 + (window.BarIconY or 0))})
+            elseif dock == "Bottom" then
+                apply(window.SideScroll, { Size = UDim2.new(1, -46, 1, 0)})
+                apply(footer, { Size = UDim2.fromOffset(34, ROW), Position = UDim2.new(1, -(14 + 34), 1, -(2 + window.BarH) + (window.BarIconY or 0))})
             end
         end
     end
