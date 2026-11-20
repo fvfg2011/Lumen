@@ -1,4 +1,4 @@
-local UI = { Version = "0.6", Windows = {}, ThemeHooks = {}, Themes = {}, ThemeOrder = {}, CurrentTheme = "Dark"}
+local UI = { Version = "0.4", Windows = {}, ThemeHooks = {}, Themes = {}, ThemeOrder = {}, CurrentTheme = "Dark"}
 
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -716,7 +716,6 @@ TabClass.__index = TabClass
 UI.TabClass = TabClass
 
 local ROW = 30
-local BAR_MAX_H = ROW + 32 -- ВРЕМЕННО: максимально возможная высота Top/Bottom-бара (ROW + 2×LABEL_BAND), для диагностической фиксированной коробки Bottom
 local RAIL_MIN = 44
 local INDENT = 26
 local INDENT_MIN = 6
@@ -751,7 +750,7 @@ local function barMetrics(window)
     -- "новом" месте — там, где бар растёт, и это нормально дёргается вместе с
     -- появлением самой полосы.
     m.IconY, m.TabLabelY, m.SubLabelY = outer, 0, outer + ROW + 2
-    m.FromFarEdge = false -- ВРЕМЕННО: Bottom временно считается точно как Top
+    m.FromFarEdge = window.Dock == "Bottom"
     return m
 end
 
@@ -1070,11 +1069,14 @@ function UI:CreateWindow(config)
         -- от верхнего/левого края, Right/Bottom — от правого/нижнего (через AnchorPoint).
         -- Если якорь меняется (сменили док), сперва мгновенно компенсируем Position,
         -- чтобы рамка не "прыгнула" на кадр, пока сайдбар ещё не доехал на новое место.
+        -- Каждый док крепится к своей "рамке" одной константой: Left/Top растут
+        -- от верхнего/левого края, Right/Bottom — от правого/нижнего (через AnchorPoint).
+        -- Если якорь меняется (сменили док), сперва мгновенно компенсируем Position,
+        -- чтобы рамка не "прыгнула" на кадр, пока сайдбар ещё не доехал на новое место.
         local dock = window.Dock
-        -- ВРЕМЕННО (диагностика): Bottom больше не крепится к нижнему краю через
-        -- AnchorPoint — вместо этого использует точно ту же логику, что и Top
-        -- (фиксированный верх коробки, рост вниз), просто коробка стоит у низа экрана.
-        local newAnchor = (dock == "Right" and Vector2.new(1, 0)) or Vector2.new(0, 0)
+        local newAnchor = (dock == "Right" and Vector2.new(1, 0))
+            or (dock == "Bottom" and Vector2.new(0, 1))
+            or Vector2.new(0, 0)
         if sidebar.AnchorPoint ~= newAnchor then
             local parent = sidebar.Parent
             if parent then
@@ -1109,10 +1111,7 @@ function UI:CreateWindow(config)
             apply(content, { Position = UDim2.fromOffset(8, 46 + height + 6), Size = UDim2.new(1, -16, 1, -(46 + height + 6 + 8))})
         elseif dock == "Bottom" then
             local height = window.BarH
-            -- ВРЕМЕННО: верх коробки зафиксирован константой (BAR_MAX_H — максимально
-            -- возможная высота бара), растём вниз ровно как Top, просто коробка
-            -- стоит у нижнего края экрана.
-            apply(sidebar, { Position = UDim2.new(0, 8, 1, -(8 + BAR_MAX_H)), Size = UDim2.new(1, -16, 0, height)})
+            apply(sidebar, { Position = UDim2.new(0, 8, 1, -8), Size = UDim2.new(1, -16, 0, height)})
             apply(content, { Position = UDim2.fromOffset(8, 44), Size = UDim2.new(1, -16, 1, -(44 + height + 6 + 8))})
         end
 
