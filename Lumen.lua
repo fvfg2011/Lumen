@@ -1102,7 +1102,7 @@ function UI:CreateWindow(config)
             local m = barMetrics(window)
             window.BarH, window.BarIconY = m.Height + 12, m.IconY
             for _, tab in ipairs(window.Tabs) do
-                styleTab(tab, false)
+                styleTab(tab, animate, seconds)
                 applyHolder(tab, animate)
             end
         end
