@@ -1110,35 +1110,35 @@ function UI:CreateWindow(config)
             local width = window.RailOpen and railWidth(window) or RAIL_MIN
             window.RailWidth = width
             if dock == "Left" then
-                apply(sidebar, { Position = UDim2.fromOffset(8, 46), Size = UDim2.new(0, width, 1, -54)})
+                apply(sidebar, { Position = UDim2.fromOffset(8, 46), Size = UDim2.new(0, width, 1, -54), BackgroundTransparency = 0})
                 apply(content, { Position = UDim2.fromOffset(width + 16, 44), Size = UDim2.new(1, -(width + 24), 1, -52)})
             else
-                apply(sidebar, { Position = UDim2.new(1, -8, 0, 46), Size = UDim2.new(0, width, 1, -54)})
+                apply(sidebar, { Position = UDim2.new(1, -8, 0, 46), Size = UDim2.new(0, width, 1, -54), BackgroundTransparency = 0})
                 apply(content, { Position = UDim2.fromOffset(8, 44), Size = UDim2.new(1, -(width + 24), 1, -52)})
             end
         elseif dock == "Top" then
             local height = window.BarH
 
-            apply(sidebar, { Position = UDim2.fromOffset(8, 46), Size = UDim2.new(1, -16, 0, height)})
+            apply(sidebar, { Position = UDim2.fromOffset(8, 46), Size = UDim2.new(1, -16, 0, height), BackgroundTransparency = 0})
             apply(content, { Position = UDim2.fromOffset(8, 46 + height + 6), Size = UDim2.new(1, -16, 1, -(46 + height + 6 + 8))})
         elseif dock == "Bottom" then
             local height = window.BarH
-            apply(sidebar, { Position = UDim2.new(0, 8, 1, -8), Size = UDim2.new(1, -16, 0, height)})
+            apply(sidebar, { Position = UDim2.new(0, 8, 1, -8), Size = UDim2.new(1, -16, 0, height), BackgroundTransparency = 0})
             apply(content, { Position = UDim2.fromOffset(8, 44), Size = UDim2.new(1, -16, 1, -(44 + height + 6 + 8))})
         end
 
+        -- Кнопка настроек (footer) теперь — ребёнок самой панели, а не окна
+        -- целиком: так она едет/скрывается вместе с панелью (в т.ч. в анимации
+        -- "заход/выход из рамки" в SetDock). Координаты — локальные, от самого
+        -- сайдбара, а не от всего окна.
         local footer, pad = window.Footer, window.SidebarPad
         if footer and pad then
             if dock == "Left" or dock == "Right" then
-                local width = window.RailWidth
                 apply(window.SideScroll, { Size = UDim2.new(1, 0, 1, -(ROW + 12))})
-                apply(footer, { Size = UDim2.fromOffset(width - 12, ROW), Position = dock == "Left" and UDim2.new(0, 14, 1, -(14 + ROW)) or UDim2.new(1, -(8 + width - 6), 1, -(14 + ROW))})
-            elseif dock == "Top" then
+                apply(footer, { Size = UDim2.fromOffset(window.RailWidth - 12, ROW), Position = UDim2.new(0, 6, 1, -36)})
+            else
                 apply(window.SideScroll, { Size = UDim2.new(1, -46, 1, 0)})
-                apply(footer, { Size = UDim2.fromOffset(34, ROW), Position = UDim2.new(1, -(14 + 34), 0, 52 + (window.BarIconY or 0))})
-            elseif dock == "Bottom" then
-                apply(window.SideScroll, { Size = UDim2.new(1, -46, 1, 0)})
-                apply(footer, { Size = UDim2.fromOffset(34, ROW), Position = UDim2.new(1, -(14 + 34), 1, -(2 + window.BarH) + (window.BarIconY or 0))})
+                apply(footer, { Size = UDim2.fromOffset(34, ROW), Position = UDim2.new(1, -40, 0, 6 + (window.BarIconY or 0))})
             end
         end
     end
@@ -1198,21 +1198,25 @@ function UI:CreateWindow(config)
 
         local oldDock = window.Dock
         if window.DockReady and oldDock ~= key then
-            -- Панель "заходит в рамку" на своём текущем месте — сжимается в точку
-            -- у своего ближнего края, — а затем, уже невидимая, мгновенно
-            -- переставляется на новое место и оттуда "выходит из рамки" обычным
-            -- твином роста внутри window:Layout.
+            -- Панель целиком (обеими осями сразу, от своего центра) "заходит в
+            -- рамку" на текущем месте, а затем, уже невидимая, мгновенно
+            -- переставляется на новое место и оттуда так же целиком "выходит из
+            -- рамки" — тем же твином роста + проявления внутри window:Layout.
             local panel = window.Sidebar
             local hadClip = panel.ClipsDescendants
             panel.ClipsDescendants = true
-            local collapseGoal
-            if oldDock == "Left" or oldDock == "Right" then
-                collapseGoal = { Size = UDim2.new(0, 0, panel.Size.Y.Scale, panel.Size.Y.Offset)}
-            else
-                collapseGoal = { Size = UDim2.new(panel.Size.X.Scale, panel.Size.X.Offset, 0, 0)}
+
+            local parent = panel.Parent
+            if parent then
+                -- Мгновенно переводим якорь в центр панели без визуального
+                -- скачка, чтобы было от чего схлопываться равномерно.
+                local center = (panel.AbsolutePosition - parent.AbsolutePosition) + panel.AbsoluteSize / 2
+                panel.AnchorPoint = Vector2.new(0.5, 0.5)
+                panel.Position = UDim2.fromOffset(center.X, center.Y)
             end
-            local tweenOut = UI.Tween(panel, collapseGoal, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            local tweenOut = UI.Tween(panel, { Size = UDim2.new(), BackgroundTransparency = 1}, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
             tweenOut.Completed:Wait()
+
             local anchor, origin = dockOrigin(key)
             panel.AnchorPoint = anchor
             panel.Position = origin
@@ -2641,7 +2645,7 @@ function UI:CreateWindow(config)
         end)
     end
 
-    local footer = new("Frame", { BackgroundTransparency = 1, Size = UDim2.fromOffset(32, ROW), ZIndex = 5}, window.Main)
+    local footer = new("Frame", { BackgroundTransparency = 1, Size = UDim2.fromOffset(32, ROW), ZIndex = 5}, window.Sidebar)
     local button = new("TextButton", { Size = UDim2.fromScale(1, 1), AutoButtonColor = false, BackgroundTransparency = 1, Text = ""}, footer)
     bindTheme(button, "BackgroundColor3", "Primary")
     corner(button, 6)
