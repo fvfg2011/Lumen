@@ -1166,6 +1166,21 @@ function UI:CreateWindow(config)
         end
     end
 
+        -- Положение (AnchorPoint + Position) "пустой точки" панели у каждой рамки —
+        -- то же самое, что используют соответствующие ветки в window:Layout. Нужно
+        -- для анимации "заход/выход из рамки" при смене дока.
+    local function dockOrigin(d)
+        if d == "Left" then
+            return Vector2.new(0, 0), UDim2.fromOffset(8, 46)
+        elseif d == "Right" then
+            return Vector2.new(1, 0), UDim2.new(1, -8, 0, 46)
+        elseif d == "Top" then
+            return Vector2.new(0, 0), UDim2.fromOffset(8, 46)
+        else
+            return Vector2.new(0, 1), UDim2.new(0, 8, 1, -8)
+        end
+    end
+
     function window:SetDock(dock, silent)
         local key
         for _, name in ipairs({ "Left", "Right", "Top", "Bottom"}) do
@@ -1179,7 +1194,34 @@ function UI:CreateWindow(config)
         if window.DockReady and window.DockSwitchUntil and os.clock() < window.DockSwitchUntil then
             return
         end
-        window.DockSwitchUntil = os.clock() + 0.46
+        window.DockSwitchUntil = os.clock() + 0.65
+
+        local oldDock = window.Dock
+        if window.DockReady and oldDock ~= key then
+            -- Панель "заходит в рамку" на своём текущем месте — сжимается в точку
+            -- у своего ближнего края, — а затем, уже невидимая, мгновенно
+            -- переставляется на новое место и оттуда "выходит из рамки" обычным
+            -- твином роста внутри window:Layout.
+            local panel = window.Sidebar
+            local hadClip = panel.ClipsDescendants
+            panel.ClipsDescendants = true
+            local collapseGoal
+            if oldDock == "Left" or oldDock == "Right" then
+                collapseGoal = { Size = UDim2.new(0, 0, panel.Size.Y.Scale, panel.Size.Y.Offset)}
+            else
+                collapseGoal = { Size = UDim2.new(panel.Size.X.Scale, panel.Size.X.Offset, 0, 0)}
+            end
+            local tweenOut = UI.Tween(panel, collapseGoal, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            tweenOut.Completed:Wait()
+            local anchor, origin = dockOrigin(key)
+            panel.AnchorPoint = anchor
+            panel.Position = origin
+            panel.Size = UDim2.new()
+            task.delay(0.46, function ()
+                panel.ClipsDescendants = hadClip
+            end)
+        end
+
         window.Dock = key
         local sidebar = window.SideScroll
         if isBar(window) then
