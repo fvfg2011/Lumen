@@ -1198,24 +1198,22 @@ function UI:CreateWindow(config)
 
         local oldDock = window.Dock
         if window.DockReady and oldDock ~= key then
-            -- Панель целиком (обеими осями сразу, от своего центра) "заходит в
-            -- рамку" на текущем месте, а затем, уже невидимая, мгновенно
-            -- переставляется на новое место и оттуда так же целиком "выходит из
-            -- рамки" — тем же твином роста + проявления внутри window:Layout.
+            -- Панель уходит в рамку целой своей стороной — вдоль оси роста
+            -- (высота для Top/Bottom, ширина для Left/Right) размер разом
+            -- идёт в ноль по всей длине, а не стягивается в точку по диагонали.
+            -- Якорь (и значит, какой край остаётся на месте) не трогаем —
+            -- он уже пришпилен к своему текущему (ближнему) краю.
             local panel = window.Sidebar
             local hadClip = panel.ClipsDescendants
             panel.ClipsDescendants = true
-
-            local parent = panel.Parent
-            if parent then
-                -- Мгновенно переводим якорь в центр панели без визуального
-                -- скачка, чтобы было от чего схлопываться равномерно.
-                local center = (panel.AbsolutePosition - parent.AbsolutePosition) + panel.AbsoluteSize / 2
-                panel.AnchorPoint = Vector2.new(0.5, 0.5)
-                panel.Position = UDim2.fromOffset(center.X, center.Y)
+            local collapseGoal
+            if oldDock == "Left" or oldDock == "Right" then
+                collapseGoal = { Size = UDim2.new(0, 0, panel.Size.Y.Scale, panel.Size.Y.Offset), BackgroundTransparency = 1}
+            else
+                collapseGoal = { Size = UDim2.new(panel.Size.X.Scale, panel.Size.X.Offset, 0, 0), BackgroundTransparency = 1}
             end
-            local tweenOut = UI.Tween(panel, { Size = UDim2.new(), BackgroundTransparency = 1}, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-            tweenOut.Completed:Wait()
+            UI.Tween(panel, collapseGoal, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+            task.wait(0.18)
 
             local anchor, origin = dockOrigin(key)
             panel.AnchorPoint = anchor
