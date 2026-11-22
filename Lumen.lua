@@ -1133,12 +1133,17 @@ function UI:CreateWindow(config)
         -- сайдбара, а не от всего окна.
         local footer, pad = window.Footer, window.SidebarPad
         if footer and pad then
+            -- Позиция/размер футера всегда мгновенные (без своего твина) — он
+            -- жёстко "прибит" к панели и просто едет/прячется вместе с ней,
+            -- а не катается отдельным независимым слайдом поверх неё.
             if dock == "Left" or dock == "Right" then
                 apply(window.SideScroll, { Size = UDim2.new(1, 0, 1, -(ROW + 12))})
-                apply(footer, { Size = UDim2.fromOffset(window.RailWidth - 12, ROW), Position = UDim2.new(0, 6, 1, -36)})
+                footer.Size = UDim2.fromOffset(window.RailWidth - 12, ROW)
+                footer.Position = UDim2.new(0, 6, 1, -36)
             else
                 apply(window.SideScroll, { Size = UDim2.new(1, -46, 1, 0)})
-                apply(footer, { Size = UDim2.fromOffset(34, ROW), Position = UDim2.new(1, -40, 0, 6 + (window.BarIconY or 0))})
+                footer.Size = UDim2.fromOffset(34, ROW)
+                footer.Position = UDim2.new(1, -40, 0, 6 + (window.BarIconY or 0))
             end
         end
     end
