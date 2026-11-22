@@ -1218,7 +1218,14 @@ function UI:CreateWindow(config)
             local anchor, origin = dockOrigin(key)
             panel.AnchorPoint = anchor
             panel.Position = origin
-            panel.Size = UDim2.new()
+            -- В ноль ставим только ось роста НОВОГО дока, а поперечную сразу —
+            -- в финальный размер (как в window:Layout), иначе рост пойдёт из
+            -- точки по диагонали вместо "всей стороной".
+            if key == "Left" or key == "Right" then
+                panel.Size = UDim2.new(0, 0, 1, -54)
+            else
+                panel.Size = UDim2.new(1, -16, 0, 0)
+            end
             task.delay(0.46, function ()
                 panel.ClipsDescendants = hadClip
             end)
